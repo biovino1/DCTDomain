@@ -7,6 +7,7 @@ Ben Iovino  06/12/23   DCTDomain
 
 import csv
 import pandas as pd
+import os
 
 
 def get_families(pfam: str) -> list:
@@ -81,7 +82,7 @@ def make_matrix(families, clan_fams, clans):
                 matrix.loc[family1, family2] = 1
 
     # Save matrix as pickle file
-    matrix.to_pickle('data/clan_matrix.pkl')
+    matrix.to_pickle('data/clans_df.pkl')
 
 
 def main():
@@ -91,13 +92,25 @@ def main():
     make_matrix().
     ============================================================================================="""
 
-    # Read clans db to get all families and clans
-    pfam = 'data/Pfam-A.clans.tsv'
+    # Read Pfam-A.seed if it exists
+    if os.path.exists('Data/Pfam-A.clans.tsv'):
+        pfam = 'Data/Pfam-A.clans.tsv'
+    else:
+        print('Pfam-A.seed not found. Downloading from Pfam...')
+        if not os.path.exists('Data'):
+            os.mkdir('Data')
+        os.system('wget -P Data ' \
+            'https://ftp.ebi.ac.uk/pub/databases/Pfam/releases/Pfam35.0/Pfam-A.clans.tsv.gz')
+        os.system('gunzip Data/Pfam-A.clans.tsv.gz')
+        pfam = 'Data/Pfam-A.clans.tsv'
+
+    # Get families and clans
     families, clan_fams = get_families(pfam)
     clans = read_clans(pfam)
 
     # Create matrix of families with values indicating if they are in the same clan
     make_matrix(families, clan_fams, clans)
+
 
 if __name__ == '__main__':
     main()
