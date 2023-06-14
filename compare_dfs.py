@@ -37,13 +37,42 @@ def load_dfs(df1: str, df2: str) -> pd.DataFrame:
     return clans_df, cluster_df
 
 
+def compare_dfs(df1: pd.DataFrame, df2: pd.DataFrame):
+    """=============================================================================================
+    This function accepts two dataframes of equal shape and compares their values. The first df
+    is used as the ground truth, and the second df is used as the test df.
+
+    :param df1: filename of ground truth dataframe
+    :param df2: filename of test dataframe
+    ============================================================================================="""
+
+    sim_count = 0
+    total_count = 0
+    for family in df1:
+        clans_series = df1[family]  # Ground truth series
+        cluster_series = df2[family]  # Test series
+        for i in range(len(clans_series)):  #pylint: disable=C0200
+            if clans_series[i] == 1 and cluster_series[i] == 1:
+                sim_count += 1
+        total_count += len(clans_series)
+
+    # Remove the number of families compared to themselves
+    similarity = (sim_count-19621) / (total_count-19621)
+    print(similarity)
+
+
 def main():
+    """=============================================================================================
+    Main initializes path to two dataframes and loads them with load_dfs(). It then compares their
+    values with compare_dfs().
+    ============================================================================================="""
 
     # Clans df is used for comparing to cluster df
     df1, df2 = 'data/clans_df.pkl', 'data/cluster_df.pkl'
     clans_df, cluster_df = load_dfs(df1, df2)
-    print(clans_df.shape, cluster_df.shape)
 
+    # Compare values
+    compare_dfs(clans_df, cluster_df)
 
 
 if __name__ == '__main__':
