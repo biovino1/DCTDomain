@@ -6,6 +6,7 @@ Ben Iovino  06/14/23   DCTDomain
 
 import pickle
 import pandas as pd
+import numpy as np
 
 
 def load_dfs(df1: str, df2: str) -> pd.DataFrame:
@@ -46,15 +47,16 @@ def compare_dfs(df1: pd.DataFrame, df2: pd.DataFrame):
     :param df2: filename of test dataframe
     ============================================================================================="""
 
-    sim_count = 0
-    total_count = 0
+    sim_count, total_count = 0, 0
     for family in df1:
-        clans_series = df1[family]  # Ground truth series
-        cluster_series = df2[family]  # Test series
-        for i in range(len(clans_series)):  #pylint: disable=C0200
-            if clans_series[i] == 1 and cluster_series[i] == 1:
+        clans_arr = df1[family].values  # Ground truth array
+        cluster_arr = df2[family].values  # Test array
+        for i in range(len(clans_arr)):  #pylint: disable=C0200
+            if clans_arr[i] == 1 and cluster_arr[i] == 1:
                 sim_count += 1
-        total_count += len(clans_series)
+
+        # For accuracy calculation, ignore NaN values because they don't belong to clans
+        total_count += (len(clans_arr) - np.count_nonzero(pd.isna(clans_arr)))
 
     # Remove the number of families compared to themselves
     similarity = (sim_count-19621) / (total_count-19621)
