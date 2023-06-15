@@ -4,9 +4,12 @@ This script takes two dataframes and compares their values.
 Ben Iovino  06/14/23   DCTDomain
 ================================================================================================"""
 
+import logging
 import pickle
 import pandas as pd
-import numpy as np
+
+logging.basicConfig(filename='data/clustering.log',
+                     level=logging.INFO, format='%(message)s')
 
 
 def load_dfs(df1: str, df2: str) -> pd.DataFrame:
@@ -47,23 +50,50 @@ def compare_dfs(df1: pd.DataFrame, df2: pd.DataFrame):
     :param df2: filename of test dataframe
     ============================================================================================="""
 
-    zero_count, one_count, total_count = 0, -19621, -19621
-    for family in df1:
+    # Counts for ground truth df and counts for comparison
+    # 19621 fams compared to themselves so subtract that from counts that include 1
+    all_zeros, all_ones = 0, 0
+    true_zeros, true_ones, false_zeros, false_ones = 0, 0, 0, 0
+
+    # Iterate through each family
+    for i, family in enumerate(df1):
         clans_arr = df1[family].values  # Ground truth array
         cluster_arr = df2[family].values  # Test array
-        for i in range(len(clans_arr)):  #pylint: disable=C0200
-            if clans_arr[i] == 1 and cluster_arr[i] == 1:
-                one_count += 1
-            if clans_arr[i] == 0 and cluster_arr[i] == 0:
-                zero_count += 1
+        for j in range(len(clans_arr)):  #pylint: disable=C0200
+            if i == j: # Ignore self-comparison
+                continue
 
-        # For accuracy calculation, ignore NaN values because they don't belong to clans
-        total_count += (len(clans_arr) - np.count_nonzero(pd.isna(clans_arr)))
+            # By checking clans_df values to be either 0 or 1, we are ignoring NaN values
+            if clans_arr[j] == 1:
+                all_ones += 1
+                if cluster_arr[j] == 1:  # True positive
+                    true_ones += 1
+                if cluster_arr[j] == 0:  # False negative
+                    false_zeros += 1
+            if clans_arr[j] == 0:
+                all_zeros += 1
+                if cluster_arr[j] == 0:  # True negative
+                    true_zeros += 1
+                if cluster_arr[j] == 1:  # False positive
+                    false_ones += 1
 
-    # Remove the number of families compared to themselves
-    similarity = (one_count) / (total_count)
-    print(zero_count, one_count, total_count)
-    print(similarity)
+    # Report confusion matrix
+    logging.info('True Positives: %s', true_ones)
+    logging.info('True Negatives: %s', true_zeros)
+    logging.info('False Positives: %s', false_ones)
+    logging.info('False Negatives: %s', false_zeros)
+
+    # Calculate accuracy, precision, recall, and f1 score
+    accuracy = (true_ones + true_zeros) / (all_ones + all_zeros)
+    precision = true_ones / (true_ones + false_ones)
+    recall = true_ones / (true_ones + false_zeros)
+    f1 = 2 * (precision * recall) / (precision + recall)
+
+    # Report accuracy, precision, recall, and f1 score
+    logging.info('Accuracy: %s', accuracy)
+    logging.info('Precision: %s', precision)
+    logging.info('Recall: %s', recall)
+    logging.info('F1 Score: %s\n', f1)
 
 
 def main():
