@@ -47,19 +47,22 @@ def compare_dfs(df1: pd.DataFrame, df2: pd.DataFrame):
     :param df2: filename of test dataframe
     ============================================================================================="""
 
-    sim_count, total_count = 0, 0
+    zero_count, one_count, total_count = 0, -19621, -19621
     for family in df1:
         clans_arr = df1[family].values  # Ground truth array
         cluster_arr = df2[family].values  # Test array
         for i in range(len(clans_arr)):  #pylint: disable=C0200
             if clans_arr[i] == 1 and cluster_arr[i] == 1:
-                sim_count += 1
+                one_count += 1
+            if clans_arr[i] == 0 and cluster_arr[i] == 0:
+                zero_count += 1
 
         # For accuracy calculation, ignore NaN values because they don't belong to clans
         total_count += (len(clans_arr) - np.count_nonzero(pd.isna(clans_arr)))
 
     # Remove the number of families compared to themselves
-    similarity = (sim_count-19621) / (total_count-19621)
+    similarity = (one_count) / (total_count)
+    print(zero_count, one_count, total_count)
     print(similarity)
 
 
