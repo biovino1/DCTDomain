@@ -25,7 +25,7 @@ def get_linkage(dct_df: pd.DataFrame, args: argparse.Namespace):
     ============================================================================================="""
 
     # Load linkage file if given as argument
-    if args.l:
+    if args.l != 'None':
         with open(args.l, 'rb') as file:
             linkage_data = pickle.load(file)
     else:
@@ -87,7 +87,7 @@ def main():
     parser.add_argument('-m', type=str, help='linkage method', default='ward')
     parser.add_argument('-p', type=str, help='linkage metric', default='euclidean')
     parser.add_argument('-l', type=str, help='linkage data file', default='data/linkage_data.pkl')
-    parser.add_argument('-t', type=int, help='fcluster threshold', default=500)
+    parser.add_argument('-t', type=float, help='fcluster threshold', default=500)
     parser.add_argument('-c', type=str, help='fcluster criterion', default='distance')
     args = parser.parse_args()
     logging.info(args)

@@ -90,10 +90,10 @@ def compare_dfs(df1: pd.DataFrame, df2: pd.DataFrame):
     f1 = 2 * (precision * recall) / (precision + recall)
 
     # Report accuracy, precision, recall, and f1 score
-    logging.info('Accuracy: %s', accuracy)
-    logging.info('Precision: %s', precision)
-    logging.info('Recall: %s', recall)
-    logging.info('F1 Score: %s\n', f1)
+    logging.info('Accuracy: %s', round(accuracy, 3))
+    logging.info('Precision: %s', round(precision, 3))
+    logging.info('Recall: %s', round(recall, 3))
+    logging.info('F1 Score: %s\n', round(f1, 3))
 
 
 def main():

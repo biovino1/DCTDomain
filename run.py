@@ -2,9 +2,14 @@ import os
 
 def main():
 
+    # Check if there is linkage data
+    if not os.path.exists('data/linkage_data.pkl'):
+        linkage_data = 'None'
+    else:
+        linkage_data = 'data/linkage_data.pkl'
+
     linkage = 'ward'
     metric = 'euclidean'
-    linkage_data = 'data/linkage_data.pkl'
     thresholds = [500, 1000, 1500, 2000, 2500, 3000, 3500, 4000]
     criterion = 'distance'
 

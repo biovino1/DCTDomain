@@ -93,16 +93,16 @@ def main():
     ============================================================================================="""
 
     # Read Pfam-A.seed if it exists
-    if os.path.exists('Data/Pfam-A.clans.tsv'):
-        pfam = 'Data/Pfam-A.clans.tsv'
+    if os.path.exists('data/Pfam-A.clans.tsv'):
+        pfam = 'data/Pfam-A.clans.tsv'
     else:
         print('Pfam-A.seed not found. Downloading from Pfam...')
-        if not os.path.exists('Data'):
-            os.mkdir('Data')
-        os.system('wget -P Data ' \
+        if not os.path.exists('data'):
+            os.mkdir('data')
+        os.system('wget -P data ' \
             'https://ftp.ebi.ac.uk/pub/databases/Pfam/releases/Pfam35.0/Pfam-A.clans.tsv.gz')
-        os.system('gunzip Data/Pfam-A.clans.tsv.gz')
-        pfam = 'Data/Pfam-A.clans.tsv'
+        os.system('gunzip data/Pfam-A.clans.tsv.gz')
+        pfam = 'data/Pfam-A.clans.tsv'
 
     # Get families and clans
     families, clan_fams = get_families(pfam)
