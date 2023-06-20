@@ -8,7 +8,7 @@ import logging
 import pickle
 import pandas as pd
 
-logging.basicConfig(filename='data/clustering.log',
+logging.basicConfig(filename='pfam_data/clustering.log',
                      level=logging.INFO, format='%(message)s')
 
 
@@ -103,7 +103,7 @@ def main():
     ============================================================================================="""
 
     # Clans df is used for comparing to cluster df
-    df1, df2 = 'data/clans_df.pkl', 'data/cluster_df.pkl'
+    df1, df2 = 'pfam_data/clans_df.pkl', 'pfam_data/cluster_df.pkl'
     clans_df, cluster_df = load_dfs(df1, df2)
 
     # Compare values

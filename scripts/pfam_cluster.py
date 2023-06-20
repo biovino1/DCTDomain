@@ -12,7 +12,7 @@ import pandas as pd
 import numpy as np
 from scipy.cluster.hierarchy import linkage, fcluster
 
-logging.basicConfig(filename='data/clustering.log',
+logging.basicConfig(filename='pfam_data/clustering.log',
                      level=logging.INFO, format='%(message)s')
 
 
@@ -30,7 +30,7 @@ def get_linkage(dct_df: pd.DataFrame, args: argparse.Namespace):
             linkage_data = pickle.load(file)
     else:
         linkage_data = linkage(dct_df, method=args.m, metric=args.p)
-        with open('data/linkage_data.pkl', 'wb') as file:
+        with open('pfam_data/linkage_data.pkl', 'wb') as file:
             pickle.dump(linkage_data, file)
 
     return linkage_data
@@ -78,7 +78,7 @@ def get_clusters(linkage_data: np.ndarray, args: argparse.Namespace, dct_df: pd.
             cluster_df.loc[family1_name] = row
 
     # Save cluster_df as pickle file
-    cluster_df.to_pickle('data/cluster_df.pkl')
+    cluster_df.to_pickle('pfam_data/cluster_df.pkl')
 
 
 def main():
@@ -93,7 +93,7 @@ def main():
     logging.info(args)
 
     # Open dct_df.pkl and get linkage_data
-    with open('data/dct_df.pkl', 'rb') as file:
+    with open('pfam_data/dct_df.pkl', 'rb') as file:
         dct_df = pickle.load(file)
     linkage_data = get_linkage(dct_df, args)
 

@@ -82,7 +82,7 @@ def make_matrix(families, clan_fams, clans):
                 matrix.loc[family1, family2] = 1
 
     # Save matrix as pickle file
-    matrix.to_pickle('data/clans_df.pkl')
+    matrix.to_pickle('pfam_data/clans_df.pkl')
 
 
 def main():
@@ -93,16 +93,16 @@ def main():
     ============================================================================================="""
 
     # Read Pfam-A.seed if it exists
-    if os.path.exists('data/Pfam-A.clans.tsv'):
-        pfam = 'data/Pfam-A.clans.tsv'
+    if os.path.exists('pfam_data/Pfam-A.clans.tsv'):
+        pfam = 'pfam_data/Pfam-A.clans.tsv'
     else:
         print('Pfam-A.seed not found. Downloading from Pfam...')
-        if not os.path.exists('data'):
-            os.mkdir('data')
-        os.system('wget -P data ' \
+        if not os.path.exists('pfam_data'):
+            os.mkdir('pfam_data')
+        os.system('wget -P pfam_data ' \
             'https://ftp.ebi.ac.uk/pub/databases/Pfam/releases/Pfam35.0/Pfam-A.clans.tsv.gz')
-        os.system('gunzip data/Pfam-A.clans.tsv.gz')
-        pfam = 'data/Pfam-A.clans.tsv'
+        os.system('gunzip pfam_data/Pfam-A.clans.tsv.gz')
+        pfam = 'pfam_data/Pfam-A.clans.tsv'
 
     # Get families and clans
     families, clan_fams = get_families(pfam)

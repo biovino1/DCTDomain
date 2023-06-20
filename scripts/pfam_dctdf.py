@@ -40,7 +40,7 @@ def make_matrix(filename: str):
     dct_df = dct_df.sort_index()  # Reorder by family ID
 
     # Save dataframe
-    with open('data/dct_df.pkl', 'wb') as file:
+    with open('pfam_data/dct_df.pkl', 'wb') as file:
         pickle.dump(dct_df, file)
 
 
@@ -49,7 +49,7 @@ def main():
     Main initializes a filename for .npz file and calls make_matrix to create a dataframe.
     ============================================================================================="""
 
-    filename = "data/Pfam-A-cons-domain.npz"
+    filename = "pfam_data/Pfam-A-cons-domain.npz"
     make_matrix(filename)
 
 

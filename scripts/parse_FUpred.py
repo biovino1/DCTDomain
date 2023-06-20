@@ -152,8 +152,8 @@ def main():
     ============================================================================================="""
 
     # File paths
-    file1 = 'data/test.info'
-    file2 = 'data/test.FUpred'
+    file1 = 'pfam_data/test.info'
+    file2 = 'pfam_data/test.FUpred'
 
     # Parse files and compare domains
     f1_domains = read_file(file1)
