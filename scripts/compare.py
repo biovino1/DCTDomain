@@ -4,11 +4,12 @@ This script takes two dataframes and compares their values.
 Ben Iovino  06/14/23   DCTDomain
 ================================================================================================"""
 
+import argparse
 import logging
 import pickle
 import pandas as pd
 
-logging.basicConfig(filename='pfam_data/clustering.log',
+logging.basicConfig(filename='clustering.log',
                      level=logging.INFO, format='%(message)s')
 
 
@@ -102,8 +103,13 @@ def main():
     values with compare_dfs().
     ============================================================================================="""
 
-    # Clans df is used for comparing to cluster df
-    df1, df2 = 'pfam_data/clans_df.pkl', 'pfam_data/cluster_df.pkl'
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-d', type=str, help='data used', default='scop_data')
+    parser.add_argument('-c', type=str, help='comparison data', default='fams_df.pkl')
+    args = parser.parse_args()
+
+    # Comparison df is used for comparing to cluster assignments in cluster_df
+    df1, df2 = f'{args.d}/{args.c}', f'{args.d}/cluster_df.pkl'
     clans_df, cluster_df = load_dfs(df1, df2)
 
     # Compare values
