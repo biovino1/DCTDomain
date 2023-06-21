@@ -30,6 +30,8 @@ def get_families(classifications: str) -> tuple:
             # Get representative domain ID and add to respective superfam ID and fam ID
             row = ''.join(row).split()
             domid, superfam, fam = row[0], row[10].split(',')[3], row[10].split(',')[4]
+            if domid in domids:  # Skip if domid already in list, its a diff region of same domain
+                continue
             domids.append(domid)
             if fam not in families:  # Update fam dict or append to list
                 families[fam] = [domid]
@@ -39,6 +41,9 @@ def get_families(classifications: str) -> tuple:
                 superfamilies[superfam] = [domid]
             else:
                 superfamilies[superfam].append(domid)
+
+    # Sort domids and create new sorted dicts for fams and superfams
+    domids.sort()
 
     return domids, families, superfamilies
 
@@ -57,11 +62,18 @@ def make_matrix(domids: list, classifier: dict, label: str):
     # Create len(domids) x len(domids) matrix
     matrix = pd.DataFrame(0, index=domids, columns=domids)
 
+    # Rename domids to be in increasing order so we can assign values to an array
+    domid_int = {}
+    for i, ind in enumerate(domids):
+        domid_int[ind] = i
+
     # Fill matrix by going through each member in dict
-    for key, value in classifier.items():  #pylint: disable=W0612
-        for family1 in value:
-            for family2 in value:
-                matrix.loc[family1, family2] = 1
+    for fam, members in classifier.items():  #pylint: disable=W0612
+        for domid1 in members:
+            row = [0 for i in range(len(matrix))]  #domid1 relation to all other domids
+            for domid2 in members:
+                row[domid_int[domid2]] = 1  # Assign 1 to corresponding domid2 index in row
+            matrix.loc[domid1] = row  # Update row in matrix
 
     # Save matrix as pickle file
     matrix.to_pickle(f'scop_data/{label}_df.pkl')
