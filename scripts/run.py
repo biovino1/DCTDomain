@@ -30,7 +30,7 @@ def main():
     for t in thresholds:
         os.system('python scripts/cluster.py ' \
                   f'-d {data} -m {linkage} -p {metric} -l {linkage_data} -t {t} -c {criterion}')
-        os.system('python scripts/compare.py' \
+        os.system('python scripts/compare.py ' \
                   f'-d {data} -c {comparison}')
 
 

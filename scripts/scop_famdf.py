@@ -20,7 +20,7 @@ def get_families(classifications: str) -> tuple:
     :return tuple: list of domain ids, family dict, and superfamily dict
     ============================================================================================="""
 
-    domids, families, superfamilies = [], {}, {}
+    domids, folds, superfams, fams = [], {}, {}, {}
     with open(classifications, 'r', encoding='utf8') as file:
         reader = csv.reader(file, delimiter='\t')
         for row in reader:
@@ -29,23 +29,29 @@ def get_families(classifications: str) -> tuple:
 
             # Get representative domain ID and add to respective superfam ID and fam ID
             row = ''.join(row).split()
-            domid, superfam, fam = row[0], row[10].split(',')[3], row[10].split(',')[4]
+            row10 = row[10].split(',')
+            domid, fold, superfam, fam = row[0], row10[2], row10[3], row10[4]
             if domid in domids:  # Skip if domid already in list, its a diff region of same domain
                 continue
             domids.append(domid)
-            if fam not in families:  # Update fam dict or append to list
-                families[fam] = [domid]
+            if fold not in folds:  # Update fold dict or append to list
+                folds[fold] = [domid]
             else:
-                families[fam].append(domid)
-            if superfam not in superfamilies:  # Update superfam dict or append to list
-                superfamilies[superfam] = [domid]
+                folds[fold].append(domid)
+            if superfam not in superfams:  # Update superfam dict or append to list
+                superfams[superfam] = [domid]
             else:
-                superfamilies[superfam].append(domid)
+                superfams[superfam].append(domid)
+            if fam not in fams:  # Update fam dict or append to list
+                fams[fam] = [domid]
+            else:
+                fams[fam].append(domid)
 
     # Sort domids and create new sorted dicts for fams and superfams
     domids.sort()
 
-    return domids, families, superfamilies
+    print(folds)
+    return domids, folds, superfams, fams
 
 
 def make_matrix(domids: list, classifier: dict, label: str):
@@ -98,9 +104,11 @@ def main():
         cla = 'scop-cla-latest.txt'
 
     # Read cla file and create matrices
-    domids, families, superfamilies = get_families(cla)
-    make_matrix(domids, families, 'fams')
-    make_matrix(domids, superfamilies, 'superfams')
+    domids, folds, superfams, fams = get_families(cla)
+    make_matrix(domids, folds, 'folds')
+    make_matrix(domids, superfams, 'superfams')
+    make_matrix(domids, fams, 'fams')
+    
 
 
 if __name__ == '__main__':
