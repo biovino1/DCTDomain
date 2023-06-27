@@ -50,7 +50,6 @@ def get_families(classifications: str) -> tuple:
     # Sort domids and create new sorted dicts for fams and superfams
     domids.sort()
 
-    print(folds)
     return domids, folds, superfams, fams
 
 
@@ -108,7 +107,6 @@ def main():
     make_matrix(domids, folds, 'folds')
     make_matrix(domids, superfams, 'superfams')
     make_matrix(domids, fams, 'fams')
-    
 
 
 if __name__ == '__main__':
