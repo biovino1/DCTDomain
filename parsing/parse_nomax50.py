@@ -1,12 +1,15 @@
 """================================================================================================
-This script takes a file with protein sequence ID's and their pfam domains. It returns the ID's
-which share at least one domain, but not all domains.
+This script takes a file with protein sequence ID's and their pfam domains. It returns pairs and
+the number of shared domains they have, as long as they do not share every domain.
 
 Ben Iovino  06/28/23   DCTDomain
 ================================================================================================"""
 
 import argparse
-import pickle
+import logging
+
+logging.basicConfig(filename='nomax50.log',
+                     level=logging.INFO, format='%(message)s')
 
 
 def read_file(file: str) -> dict:
@@ -140,7 +143,7 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-m', type=str, help='match/nomatch locations', default='nomatch')
-    parser.add_argument('-c', type=str, help='include clans or not', default='no')
+    parser.add_argument('-c', type=str, help='include clans or not', default='yes')
     args = parser.parse_args()
 
     # Get proteins and domains from file
@@ -153,9 +156,13 @@ def main():
     if args.m == 'nomatch':
         pairs = number_domains(prots, args)
 
-    # Save to pickle
-    with open(f'parsing/pfam_nomax50_{args.m}_pairs.pkl', 'wb') as file:
-        pickle.dump(pairs, file)
+    logging.info('Pair,Number of Matches,Domains')
+
+    # Print out pairs in order of number of matches
+    for i in range(1, 11):
+        for pair, matches in pairs.items():
+            if matches[0] == i:
+                logging.info('%s,%s,%s', pair, matches[0], '.'.join(matches[1:]))
 
 
 if __name__ == '__main__':
