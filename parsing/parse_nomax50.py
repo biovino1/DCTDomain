@@ -5,6 +5,7 @@ which share at least one domain, but not all domains.
 Ben Iovino  06/28/23   DCTDomain
 ================================================================================================"""
 
+import argparse
 import pickle
 
 
@@ -27,41 +28,39 @@ def read_file(file: str) -> dict:
     return prots
 
 
-def compare_dicts(count1: dict, count2: dict, prot1: str, prot2: str):
+def compare_dicts(count1: dict, count2: dict, args: argparse.Namespace) -> list:
     """=============================================================================================
     This function accepts two dictionaries of domains and their counts and compares them.
 
     :param count1: dict of domains and counts for protein 1
     :param count2: dict of domains and counts for protein 2
-    :param prot1: protein 1 ID
-    :param prot2: protein 2 ID
+    :param args: argparse namespace
+    :return dict: list of all matching domains (repeats are included)
     ============================================================================================="""
 
-    # Count number of matching domains
-    pairs = {}
-    matches = 0
-    for dom in count1:
-        #if dom.startswith('CL'):
-            #continue
-        if dom in count2:
+    # Ignore if all domains match
+    if count1 == count2:
+        return
 
-            # Add number of matches as key to dict, value is list of matching prots and domains
-            matches = min(count1[dom], count2[dom])
+    # Get all matching domains between the two proteins
+    matches = []
+    for dom1, co1 in count1.items():
+        if args.c == 'no' and dom1.startswith('CL'):
+            continue
+        for dom2, co2 in count2.items():
+            if dom1 == dom2:
+                matches += [dom1] * min(co1, co2)
 
-            # Sum number of total domains in each count dict
-            total1, total2 = sum(count1.values()), sum(count2.values())
-            if matches < max(total1, total2):  # Don't include pair if all domains match
-                pairs[matches] = pairs.get(matches, []) + [prot1, prot2, dom]
-
-    return pairs
+    return matches
 
 
-def compare_domains(prots: dict) -> dict:
+def number_domains(prots: dict, args: argparse.Namespace) -> dict:
     """=============================================================================================
     This function accepts a dict of prot ID's and domains and returns all pairs that share at
-    least one domain, but not all domains.
+    least one domain, but not all domains, in any order
 
     :param prots: dict of prot ID's and domains
+    :param args: argparse namespace
     :return dict: key is two prot ID's, value is a list of matching domains and number of matches
     ============================================================================================="""
 
@@ -75,21 +74,59 @@ def compare_domains(prots: dict) -> dict:
 
         # Get domain counts for all other proteins
         for prot2, doms2 in prots.items():
-            if f'{prot2};{prot1}' in pairs:  # Ignore repeat pairs
+
+            # Ignore repeat pairs
+            if f'{prot2};{prot1}' in pairs:
                 continue
             count2 = {}
             for dom in doms2:
                 count2[dom] = count2.get(dom, 0) + 1
 
             # Compare the two dictionaries
-            if prot1 != prot2 and count1 != count2:
-                compare = compare_dicts(count1, count2, prot1, prot2)
+            matches = compare_dicts(count1, count2, args)
 
-                # Add to pairs dict
-                for match, pair in compare.items():
-                    key = f'{pair[0]};{pair[1]}'
-                    value = pair[2]
-                    pairs[key] = pairs.get(key, []) + [match, value]
+            if matches:
+                ids = f'{prot1};{prot2}'
+                pairs[ids] = pairs.get(ids, [0]) + matches
+                pairs[ids][0] += len(matches)
+
+    return pairs
+
+
+def match_domains(prots: dict, args = argparse.Namespace) -> dict:
+    """=============================================================================================
+    This function accepts a dict of prot ID's and domains and returns all pairs that share at
+    least one domain, but not all domains, in the same order.
+
+    :param prots: dict of prot ID's and domains
+    :param args: argparse namespace
+    :return dict: key is two prot ID's, value is a list of matching domains and number of matches
+    ============================================================================================="""
+
+    pairs = {}
+    for prot1, doms1 in prots.items():
+        for prot2, doms2, in prots.items():
+            if prot1 == prot2:
+                continue
+
+            if f'{prot2};{prot1}' in pairs:  # Ignore repeat pairs
+                continue
+
+            # Find matching domains in order
+            matches = []
+            if doms1 == doms2:
+                continue
+            for i in range(min(len(doms1), len(doms2))):
+                if doms1[i] == doms2[i]:
+                    if args.c == 'no' and doms1[i].startswith('CL'):
+                        continue
+                    matches.append(doms1[i])
+
+            # Add matches to dict if not all domains match
+            if matches and len(matches) < max(len(doms1), len(doms2)):
+                key = f'{prot1};{prot2}'
+                value = matches
+                pairs[key] = pairs.get(key, []) + value
 
     return pairs
 
@@ -101,12 +138,23 @@ def main():
     with compare_domains(). The resulting dict of pairs is saved as a pickle file.
     ============================================================================================="""
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-m', type=str, help='match/nomatch locations', default='nomatch')
+    parser.add_argument('-c', type=str, help='include clans or not', default='no')
+    args = parser.parse_args()
+
+    # Get proteins and domains from file
     file = 'parsing/pfam_nomax50.info'
     prots = read_file(file)
-    pairs = compare_domains(prots)
+
+    # Get pairs of proteins
+    if args.m == 'match':
+        pairs = match_domains(prots, args)
+    if args.m == 'nomatch':
+        pairs = number_domains(prots, args)
 
     # Save to pickle
-    with open('parsing/pfam_nomax50_pairs.pkl', 'wb') as file:
+    with open(f'parsing/pfam_nomax50_{args.m}_pairs.pkl', 'wb') as file:
         pickle.dump(pairs, file)
 
 
