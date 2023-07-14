@@ -1,5 +1,5 @@
 """================================================================================================
-This script takes sequences from a fasta file and returns their embeddings.
+This script takes sequences from a fasta file and saves their embeddings.
 
 Ben Iovino  07/14/23   DCTDomain
 ================================================================================================"""
@@ -48,6 +48,7 @@ def embed_seqs(seqs: list, args: argparse.Namespace):
 
     # Embed sequences
     batch_labels, batch_strs, batch_tokens = batch_converter(seqs)  #pylint: disable=W0612
+    batch_tokens = batch_tokens.to(device)  # send tokens to gpu
     with torch.no_grad():
         results = model(batch_tokens, repr_layers=[args.l])
     token_representations = results["representations"][args.l]
@@ -55,26 +56,26 @@ def embed_seqs(seqs: list, args: argparse.Namespace):
     # Make an array of each label and its embedding, add to list
     embeds = []
     for i in range(len(seqs)):  #pylint: disable=C0200
-        embeds.append(np.array([seqs[i][0], token_representations[i].numpy()], dtype=object))
+        embeds.append(np.array([seqs[i][0], token_representations[i].cpu().numpy()], dtype=object))
 
     # Save embeddings
-    with open(f'{args.f}.npy', 'wb') as emb:
+    with open(f'{args.f.split(".")[0]}.emb', 'wb') as emb:
         np.save(emb, embeds)
 
 
 def main():
     """=============================================================================================
-    Main
+    Main loads sequences from input file and embeds them with ESM-2.
     ============================================================================================="""
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', type=str, default='embedding/pfam_max50.fasta')
-    parser.add_argument('l', type=int, default=36)
+    parser.add_argument('-l', type=int, default=36)
     args = parser.parse_args()
 
     # Load sequences and embed
     seqs = load_seqs(args.f)
-    seqs = seqs[:19]
+    seqs = seqs[:10]
     embed_seqs(seqs, args)
 
 
