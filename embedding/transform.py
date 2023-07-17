@@ -72,7 +72,7 @@ def transform_embeds(embeds: list, args: argparse.Namespace):
         dct_vec = np.array([embed[0], embed[1]], dtype=object)
         dcts.append(dct_vec)
 
-    with open('nomax_data/transforms.npy', 'wb') as emb:
+    with open('max50_data/transforms.npy', 'wb') as emb:
         np.save(emb, dcts)
 
 
@@ -83,14 +83,10 @@ def main():
     ============================================================================================="""
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-d', type=str, default='nomax_data/embeddings')
+    parser.add_argument('-d', type=str, default='max50_data/embeddings')
     parser.add_argument('-s1', type=int, default=5)
     parser.add_argument('-s2', type=int, default=44)
     args = parser.parse_args()
-
-    # Make directory for transforms
-    if not os.path.exists('nomax_data/transforms'):
-        os.mkdir('nomax_data/transforms')
 
     # Get list of all embedding files and transform all of them
     embeds = [f'{args.d}/{file}' for file in os.listdir(args.d)]

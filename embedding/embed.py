@@ -5,9 +5,9 @@ Ben Iovino  07/14/23   DCTDomain
 ================================================================================================"""
 
 import argparse
+import os
 import esm
 import numpy as np
-import os
 import torch
 from Bio import SeqIO
 
@@ -49,8 +49,7 @@ def embed_seq(seq: tuple, args: argparse.Namespace, model: torch.nn.Module,
 
     # Make an array of label and its embedding, save to file
     embed = np.array([seq[0], token_representations[0].cpu().numpy()], dtype=object)
-    print(embed)
-    with open(f'nomax_data/embeddings/{batch_labels[0]}.npy', 'wb') as emb:
+    with open(f'max50_data/embeddings/{batch_labels[0]}.npy', 'wb') as emb:
         np.save(emb, embed)
 
 
@@ -76,9 +75,10 @@ def main():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')  # pylint: disable=E1101
     model = model.to(device)
 
-    # Make directory for embeddings
-    if not os.path.exists('nomax_data/embeddings'):
-        os.mkdir('nomax_data/embeddings')
+    # Make directory for embeddings if it doesn't exist
+    if not os.path.exists('max50_data'):
+        os.mkdir('max50_data')
+        os.mkdir('max50_data/embeddings')
 
     # Embed each sequence
     for seq in seqs:
