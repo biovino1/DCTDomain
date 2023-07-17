@@ -33,6 +33,7 @@ def comp_dist(transforms: np.ndarray) -> tuple:
             if line.startswith('#'):  # Skip first line
                 continue
             pairs.append(line.split())
+    prot_pairs = [(pairs[i][0], pairs[i][1]) for i in range(len(pairs))]
 
     # Compute distances
     distances = []
@@ -42,7 +43,7 @@ def comp_dist(transforms: np.ndarray) -> tuple:
                 continue
 
             # Only if pair is in pfam_max50
-            if (transforms[i][0], transforms[j][0]) in pairs:
+            if (transforms[i][0], transforms[j][0]) in prot_pairs:
                 dist = 1/cityblock(transforms[i][1], transforms[j][1])
                 logging.info('%s %s %s', transforms[i][0], transforms[j][0], dist)
                 distances.append((transforms[i][0], transforms[j][0], dist))

@@ -9,7 +9,7 @@ Ben Iovino  07/17/23   DCTDomain
 import logging
 import os
 
-logging.basicConfig(filename='Data/test_layers.log',
+logging.basicConfig(filename='embedding/test_layers.log',
                      level=logging.INFO, format='%(message)s')
 
 
@@ -20,11 +20,11 @@ def main():
 
     # Embed, transform, and compute distances
     for i in range(1, 37):
-        logging.info('Embedding sequences...')
+        logging.info('Embedding sequences (layer %s)...', i)
         os.system(f'python embedding/embed.py -f embedding/pfam_max50.fasta -l {i}')
-        logging.info('Transforming embeddings...')
+        logging.info('Transforming embeddings (layer %s)...', i)
         os.system('python embedding/transform.py')
-        logging.info('Computing distances...')
+        logging.info('Computing distances (layer %s)...\n', i)
         os.system(f'python embedding/distance.py -l {i}')
 
 
