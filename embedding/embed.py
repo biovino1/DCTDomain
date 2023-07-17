@@ -1,5 +1,5 @@
 """================================================================================================
-This script takes sequences from a fasta file and saves their embeddings.
+This script takes sequences from a fasta file and embeds each one individiually.
 
 Ben Iovino  07/14/23   DCTDomain
 ================================================================================================"""
@@ -7,6 +7,7 @@ Ben Iovino  07/14/23   DCTDomain
 import argparse
 import esm
 import numpy as np
+import os
 import torch
 from Bio import SeqIO
 
@@ -28,55 +29,60 @@ def load_seqs(file: str) -> list:
     return seqs
 
 
-def embed_seqs(seqs: list, args: argparse.Namespace):
+def embed_seq(seq: tuple, args: argparse.Namespace, model: torch.nn.Module,
+               batch_converter: esm.data.BatchConverter, device: str):
     """=============================================================================================
-    This function takes a filename and a list of sequences. It saves a numpy array of the
-    embeddings.
+    This function takes a filename and a protein seq and its id. It saves a numpy array of the
+    embedding.
 
     :param seqs: list of sequences
     :param args: args for filename and encoder layer
     ============================================================================================="""
 
-    # Load ESM-2 model
+    # Embed sequences
+    batch_labels, batch_strs, batch_tokens = batch_converter([seq])  #pylint: disable=W0612
+    batch_tokens = batch_tokens.to(device)  # send tokens to gpu
+
+    with torch.no_grad():
+        results = model(batch_tokens, repr_layers=[args.l])
+    token_representations = results["representations"][args.l]
+
+    # Make an array of label and its embedding, save to file
+    embed = np.array([seq[0], token_representations[0].cpu().numpy()], dtype=object)
+    print(embed)
+    with open(f'nomax_data/embeddings/{batch_labels[0]}.npy', 'wb') as emb:
+        np.save(emb, embed)
+
+
+def main():
+    """=============================================================================================
+    Main loads sequences from input file and embeds them with ESM-2. Embeddings are saved as
+    individual numpy arrays because they are too large to save as a single file with the model
+    loaded on the GPU (lame).
+    ============================================================================================="""
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-f', type=str, default='embedding/pfam_max50.fasta')
+    parser.add_argument('-l', type=int, default=35)
+    args = parser.parse_args()
+
+    # Load sequences and model
+    seqs = load_seqs(args.f)
     model, alphabet = esm.pretrained.esm2_t36_3B_UR50D()
     batch_converter = alphabet.get_batch_converter()
-    model.eval()  # disables dropout for deterministic results
+    model.eval()
 
     # Load to GPU if available
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')  # pylint: disable=E1101
     model = model.to(device)
 
-    # Embed sequences
-    batch_labels, batch_strs, batch_tokens = batch_converter(seqs)  #pylint: disable=W0612
-    batch_tokens = batch_tokens.to(device)  # send tokens to gpu
-    with torch.no_grad():
-        results = model(batch_tokens, repr_layers=[args.l])
-    token_representations = results["representations"][args.l]
+    # Make directory for embeddings
+    if not os.path.exists('nomax_data/embeddings'):
+        os.mkdir('nomax_data/embeddings')
 
-    # Make an array of each label and its embedding, add to list
-    embeds = []
-    for i in range(len(seqs)):  #pylint: disable=C0200
-        embeds.append(np.array([seqs[i][0], token_representations[i].cpu().numpy()], dtype=object))
-
-    # Save embeddings
-    with open(f'{args.f.split(".")[0]}.emb', 'wb') as emb:
-        np.save(emb, embeds)
-
-
-def main():
-    """=============================================================================================
-    Main loads sequences from input file and embeds them with ESM-2.
-    ============================================================================================="""
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-f', type=str, default='embedding/pfam_max50.fasta')
-    parser.add_argument('-l', type=int, default=36)
-    args = parser.parse_args()
-
-    # Load sequences and embed
-    seqs = load_seqs(args.f)
-    seqs = seqs[:10]
-    embed_seqs(seqs, args)
+    # Embed each sequence
+    for seq in seqs:
+        embed_seq(seq, args, model, batch_converter, device)
 
 
 if __name__ == '__main__':

@@ -1,10 +1,11 @@
 """================================================================================================
-This script takes embeddings from a numpy array and transforms them with DCT.
+This script takes embeddings from numpy arrays and transforms them with DCT.
 
 Ben Iovino  07/14/23   DCTDomain
 ================================================================================================"""
 
 import argparse
+import os
 import numpy as np
 from scipy.fft import dct, idct
 
@@ -55,32 +56,45 @@ def quant2D(emb: np.ndarray, n: int, m: int) -> np.ndarray:
     return (ddct*127).astype('int8')
 
 
-def transform_embeds(args: argparse.Namespace):
+def transform_embeds(embeds: list, args: argparse.Namespace):
     """=============================================================================================
-    This function takes an array of embeddings and transforms them using DCT.
+    This function takes a list of embedding files and transforms them with DCT, saving the entire
+    collection to a single file.
 
-    :param args: file with embeddings and DCT dimensions
+    :param embeds: list of embedding files
+    :param args: DCT dimensions
     ============================================================================================="""
 
-    embeds = np.load(args.f, allow_pickle=True)
-    for i, embed in enumerate(embeds):  # transform each embedding in array
-        embeds[i][1] = quant2D(embed[1], args.s1, args.s2)
-    with open(f'{args.f.split(".")[0]}.dct', 'wb') as emb:
-        np.save(emb, embeds)
+    dcts = []
+    for embed in embeds:
+        embed = np.load(embed, allow_pickle=True)
+        embed[1] = quant2D(embed[1], args.s1, args.s2)
+        dct_vec = np.array([embed[0], embed[1]], dtype=object)
+        dcts.append(dct_vec)
+
+    with open('nomax_data/transforms.npy', 'wb') as emb:
+        np.save(emb, dcts)
 
 
 def main():
     """=============================================================================================
-    Main
+    Main takes a directory of embeddings and transforms them with DCT. The resulting transforms are
+    saved to a single file.
     ============================================================================================="""
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-f', type=str, default='embedding/pfam_max50.emb')
+    parser.add_argument('-d', type=str, default='nomax_data/embeddings')
     parser.add_argument('-s1', type=int, default=5)
     parser.add_argument('-s2', type=int, default=44)
     args = parser.parse_args()
 
-    transform_embeds(args)
+    # Make directory for transforms
+    if not os.path.exists('nomax_data/transforms'):
+        os.mkdir('nomax_data/transforms')
+
+    # Get list of all embedding files and transform all of them
+    embeds = [f'{args.d}/{file}' for file in os.listdir(args.d)]
+    transform_embeds(embeds, args)
 
 
 if __name__ == '__main__':
