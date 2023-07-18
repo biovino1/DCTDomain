@@ -104,7 +104,8 @@ def graph_auroc(rocs: list, layer: int):
 
 def main():
     """=============================================================================================
-    Main
+    Main takes a file of DCT vectors and computes the distance between each one. It then computes
+    AUROC and graphs the results.
     ============================================================================================="""
 
     parser = argparse.ArgumentParser()
