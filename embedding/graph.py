@@ -35,7 +35,7 @@ def graph_auroc(auroc: list):
     aurange = range(len(auroc))
     plt.figure(figsize=(12, 5))
     plt.plot(list(aurange), [auroc[i][1] for i in aurange], 'o-')
-    plt.xlabel('Layer')
+    plt.xlabel('ESM2-3B Layer')
     plt.ylabel('AUROC')
     plt.title('AUROC vs. Layer')
     plt.xticks(list(aurange), [auroc[i][0] for i in aurange])
