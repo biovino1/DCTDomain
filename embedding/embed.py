@@ -49,7 +49,7 @@ def embed_seq(seq: tuple, args: argparse.Namespace, model: torch.nn.Module,
 
     # Make an array of label and its embedding, save to file
     embed = np.array([seq[0], token_representations[0].cpu().numpy()], dtype=object)
-    with open(f'max50_data/embeddings/{batch_labels[0]}.npy', 'wb') as emb:
+    with open(f'max50_data/embeddings_{args.l}/{batch_labels[0]}.npy', 'wb') as emb:
         np.save(emb, embed)
 
 
@@ -62,7 +62,7 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', type=str, default='embedding/pfam_max50.fasta')
-    parser.add_argument('-l', type=int, default=35)
+    parser.add_argument('-l', type=int, default=23)
     args = parser.parse_args()
 
     # Load sequences and model
@@ -78,7 +78,8 @@ def main():
     # Make directory for embeddings if it doesn't exist
     if not os.path.exists('max50_data'):
         os.mkdir('max50_data')
-        os.mkdir('max50_data/embeddings')
+    if not os.path.exists('max50_data/embeddings'):
+        os.mkdir(f'max50_data/embeddings_{args.l}')
 
     # Embed each sequence
     for seq in seqs:

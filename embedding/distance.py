@@ -97,7 +97,7 @@ def graph_auroc(rocs: list, layer: int):
     ax.plot(rocs[0][0], rocs[0][1], label=f'AUROC: {auc:.3f}')
     ax.set_xlabel('False Positive Rate')
     ax.set_ylabel('True Positive Rate')
-    ax.set_title(f'AUROC (ESM2 Layer {layer}')
+    ax.set_title(f'AUROC (ESM2 Layer {layer})')
     ax.legend(loc='lower right')
     plt.savefig(f'max50_data/auroc{layer}.png')
 
@@ -109,12 +109,17 @@ def main():
     ============================================================================================="""
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-f', type=str, default='max50_data/transforms.npy')
-    parser.add_argument('-l', type=int, default=35)
+    parser.add_argument('-l', type=str, default='comb', help='comb/layer used')
     args = parser.parse_args()
 
     # Load file and compute distances
-    transforms = np.load(args.f, allow_pickle=True)
+    if args.l == 'comb':
+        direc = 'max50_data/transforms.npy'
+    else:
+        direc = f'max50_data/embeddings_{args.l}/transforms.npy'
+
+    # Load transforms and compute distances
+    transforms = np.load(direc, allow_pickle=True)
     pairs, distances = comp_dist(transforms)
 
     # Compute auroc and save results
