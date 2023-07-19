@@ -10,7 +10,6 @@ import esm
 import numpy as np
 import torch
 from Bio import SeqIO
-from transformers import T5EncoderModel, T5Tokenizer
 
 
 def load_seqs(file: str) -> list:
@@ -28,53 +27,6 @@ def load_seqs(file: str) -> list:
             seqs.append((seq.id, str(seq.seq)))
 
     return seqs
-
-
-def prot_t5xl_embed(seq: tuple, args: argparse.Namespace,
-                    tokenizer: T5Tokenizer, encoder: T5EncoderModel, device:str) -> list:
-    """=============================================================================================
-    This function accepts a protein sequence and returns a list of vectors, each vector representing
-    a single amino acid using RostLab's ProtT5_XL_UniRef50 model.
-
-    :param seq: protein sequence
-    :param tokenizer: tokenizer model
-    :param encoder: encoder model
-    :param device: gpu/cpu
-    :param layer: layer to extract features from
-    return: list of vectors
-    ============================================================================================="""
-
-    # Tokenize, encode, and load sequence
-    ids = tokenizer.batch_encode_plus(seq[1], add_special_tokens=True, padding=True)
-    input_ids = torch.tensor(ids['input_ids']).to(device)  # pylint: disable=E1101
-    attention_mask = torch.tensor(ids['attention_mask']).to(device)  # pylint: disable=E1101
-
-   # Foward hook for extracting features from layer n
-    activation = {}
-    def get_activation(name):
-        def hook(model, input, output):  # pylint: disable=W0613, W0622
-            output = output.numpy()
-            activation[name] = output
-        return hook
-    encoder.encoder.block[args.l].layer[1].layer_norm.register_forward_hook(
-        get_activation(f'layer_{args.l}'))
-
-    # Extract sequence features
-    with torch.no_grad():
-        embedding = encoder(input_ids=input_ids,attention_mask=attention_mask)
-    embedding = activation[f'layer_{args.l}']
-
-    # Remove padding and special tokens
-    features = []
-    for seq_num in range(len(embedding)):  # pylint: disable=C0200
-        seq_len = (attention_mask[seq_num] == 1).sum()
-        seq_emd = embedding[seq_num][:seq_len-1]
-        features.append(seq_emd)
-
-    # Make an array of label and its embedding, save to file
-    embed = np.array([seq[0], features[0]], dtype=object)
-    with open(f'max50_data/embeddings_{args.l}/{seq[0]}.npy', 'wb') as emb:
-        np.save(emb, embed)
 
 
 def embed_seq(seq: tuple, args: argparse.Namespace, model: torch.nn.Module,
@@ -115,15 +67,13 @@ def main():
 
     # Load sequences and model
     seqs = load_seqs(args.f)
-    #model, alphabet = esm.pretrained.esm2_t36_3B_UR50D()
-    #batch_converter = alphabet.get_batch_converter()
-    #model.eval()
+    model, alphabet = esm.pretrained.esm2_t36_3B_UR50D()
+    batch_converter = alphabet.get_batch_converter()
+    model.eval()
 
-    # Load the tokenizer
     # Load to GPU if available
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')  # pylint: disable=E1101
-    tokenizer = T5Tokenizer.from_pretrained('Rostlab/prot_t5_xl_uniref50', do_lower_case=False)
-    model = T5EncoderModel.from_pretrained("Rostlab/prot_t5_xl_uniref50").to(device)
+    model = model.to(device)
 
     # Make directory for embeddings if it doesn't exist
     if not os.path.exists('max50_data'):
@@ -133,7 +83,7 @@ def main():
 
     # Embed each sequence
     for seq in seqs:
-        prot_t5xl_embed(seq, args, tokenizer, model, device)
+        embed_seq(seq, args, model, batch_converter, device)
 
 
 if __name__ == '__main__':
