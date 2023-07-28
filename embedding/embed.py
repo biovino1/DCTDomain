@@ -67,7 +67,7 @@ def main():
 
     # Load sequences and model
     seqs = load_seqs(args.f)
-    model, alphabet = esm.pretrained.esm2_t36_3B_UR50D()
+    model, alphabet = esm.pretrained.esm2_t33_650M_UR50D()
     batch_converter = alphabet.get_batch_converter()
     model.eval()
 

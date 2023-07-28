@@ -1,0 +1,24 @@
+{
+  "version": "1.2",
+  "dbname": "db_seq",
+  "dbtype": "Protein",
+  "db-version": 5,
+  "description": "benchmarking/db_seq.fa",
+  "number-of-letters": 520,
+  "number-of-sequences": 1,
+  "last-updated": "2023-07-28T14:30:00",
+  "number-of-volumes": 1,
+  "bytes-total": 49922,
+  "bytes-to-cache": 634,
+  "files": [
+    "db_seq.pdb",
+    "db_seq.phr",
+    "db_seq.pin",
+    "db_seq.pog",
+    "db_seq.pos",
+    "db_seq.pot",
+    "db_seq.psq",
+    "db_seq.ptf",
+    "db_seq.pto"
+  ]
+}
