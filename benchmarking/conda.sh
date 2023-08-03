@@ -37,5 +37,9 @@ chmod -R 777 bin/usearch
 ### TESTING ###
 
 ## CSBLAST COMMANDS
-# formatdb -t test -i test_db.seq - p T
-# csblast -i test_query.seq -d test_db.seq -D /home/ben/anaconda3/data/K4000.lib --blast-path /home/ben/anaconda3/envs/benchmarking/bin
+# ffindex_from_fasta -s test_fas.ffdata test_fas.ffindex test_db.fas
+# hhblits_omp -i test_fas -d scop40_01Mar17/scop40 -oa3m test_a3m_wo_ss -n 2 -cpu 1 -v 0
+# mv test_a3m_wo_ss.ffindex test_a3m.ffindex
+# mv test_a3m.ffdata test_a3m.ffdata
+# ffindex_apply test_a3m.ffdata test_a3m.ffindex -i test_hmm.ffindex -d test_hmm.ffdata -- hhmake -i stdin -o stdout -v 0
+# cstranslate -f -x 0.3 -c 4 -I a3m -i test_a3m -o test_cs219
