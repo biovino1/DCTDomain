@@ -81,8 +81,8 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-f1', type=str, default='embedding/graphs/auroc.txt')
-    parser.add_argument('-f2', type=str, default='embedding/graphs/auroc17_dim.txt')
-    parser.add_argument('-f3', type=str, default='embedding/graphs/auroc23_dim.txt')
+    parser.add_argument('-f2', type=str, default='embedding/graphs/auroc16_dim.txt')
+    parser.add_argument('-f3', type=str, default='embedding/graphs/auroc22_dim.txt')
     args = parser.parse_args()
 
     # Get auroc values and graph
