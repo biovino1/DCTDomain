@@ -9,10 +9,10 @@ Miscellaneous scripts for benchmarking, clustering, embedding, and parsing diffe
 **************************************************************************************************************
 
 A replication of the results from https://academic.oup.com/bioinformatics/article/32/17/2636/2450749 where
-multiple state-of-the-art protein database searching programs are ran on the pfam-max50 dataset. conda.sh
-sets up the conda environment with all of the necessary dependancies. The benchmarking script is then run
-to compare each protein pair in the dataset to each other to get a bit score and E-value. The results are
-then parsed and the AUROC is calculated.
+multiple state-of-the-art protein database searching programs are ran on the pfam-max50 and pfam_nomax50
+datasets. conda.sh sets up the conda environment with all of the necessary dependancies. benchmarking.py is
+then run to compare each protein pair in the dataset to each other to get a bit score and E-value. The results
+are then parsed and the AUROC is calculated.
 
 Instructions on how to use each tool for the purposes of this project can be found in guide.txt in the
 benchmarking directory.

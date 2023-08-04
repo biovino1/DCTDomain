@@ -1,6 +1,6 @@
-"""This script takes all pairs from pfam_max50.pair and performs homology searchs on each one, with
-the first sequence acting as the 'sequence database' and the second sequence acting as the query
-sequence. E-value and bit scores are saved to a file.
+"""This script takes all pairs from pfam pair datasets and performs homology searchs on each one,
+with the first sequence acting as the 'sequence database' and the second sequence acting as the
+query sequence. E-value and bit scores are saved to a file.
 
 __author__ = 'Benjamin Iovino'
 __date__ = '07/27/23'
@@ -44,18 +44,19 @@ def get_seqs(file: str) -> dict:
     return seqs
 
 
-def phmmer_search(pairs: list, seqs: dict):
+def phmmer_search(pairs: list, seqs: dict, dataset: str):
     """This function takes a list of protein pairs, each pair being used to get their respective
     sequences from a dictionary of seqs. The first sequence is used as the 'sequence database' and 
     the second sequence is used as the query sequence in a phmmer search.
 
     :param pairs: list of pairs
     :param seqs: dictionary where seq is ID and value is sequence
+    :param dataset: dataset name
     """
 
     direc = 'bm_data'
     os.system(f'rm -rf {direc}')
-    os.system(f'mkdir bm_{direc}')
+    os.system(f'mkdir {direc}')
     results = {}
     for pair in pairs:
 
@@ -70,33 +71,29 @@ def phmmer_search(pairs: list, seqs: dict):
         # Get E-value and bit score from phmmer search
         # 14th line of stdout, will be blank if no hits detected
         result = subprocess.getoutput(f'phmmer {direc}/db_seq.fa bm_data/query_seq.fa')
-        try:
-            result_line = result.split('\n')[14].split()
-        except IndexError:
-            print(result)
-            print(result_line)
-            break
+        result_line = result.split('\n')[14].split()
 
         # If there is a hit, check if the hit is the same as the query sequence
         if result_line == [] or result_line[-1] != pair[1]:
-            result_line = 0
+            result_line = [0]
         else:
-            result_line = [result_line[0], result_line[1]]
+            result_line = [result_line[1], result_line[0]]
         results[(pair[0], pair[1])] = result_line
 
     # Save so we can load for later parsing, much faster than running search each time
     os.system(f'rm -rf {direc}')
-    with open('benchmarking/results/phmmer_results.pkl', 'wb') as f:
+    with open(f'benchmarking/results/{dataset}/phmmer_results.pkl', 'wb') as f:
         pickle.dump(results, f)
 
 
-def blast_search(pairs: list, seqs: dict):
+def blast_search(pairs: list, seqs: dict, dataset: str):
     """This function takes a list of protein pairs, each pair being used to get their respective
     sequences from a dictionary of seqs. The first sequence is used as the 'blast database' and 
     the second sequence is used as the query sequence in a blastp search.
 
     :param pairs: list of pairs
     :param seqs: dictionary where seq is ID and value is sequence
+    :param dataset: dataset name
     """
 
     direc = 'bm_data'
@@ -129,17 +126,18 @@ def blast_search(pairs: list, seqs: dict):
 
     # Save for later parsing
     os.system(f'rm -rf {direc}')
-    with open('benchmarking/results/blast_results.pkl', 'wb') as f:
+    with open(f'benchmarking/results/{dataset}/blast_results.pkl', 'wb') as f:
         pickle.dump(results, f)
 
 
-def fasta_search(pairs: list, seqs: dict):
+def fasta_search(pairs: list, seqs: dict, dataset: str):
     """This function takes a list of protein pairs, each pair being used to get their respective
     sequences from a dictionary of seqs. The first sequence is used as the 'fasta database' and 
     the second sequence is used as the query sequence in a fasta search.
 
     :param pairs: list of pairs
     :param seqs: dictionary where seq is ID and value is sequence
+    :param dataset: dataset name
     """
 
     direc = 'bm_data'
@@ -164,17 +162,18 @@ def fasta_search(pairs: list, seqs: dict):
 
     # Save for later parsing
     os.system(f'rm -rf {direc}')
-    with open('benchmarking/results/fasta_results.pkl', 'wb') as f:
+    with open(f'benchmarking/results/{dataset}/fasta_results.pkl', 'wb') as f:
         pickle.dump(results, f)
 
 
-def ublast_search(pairs: list, seqs: dict):
+def ublast_search(pairs: list, seqs: dict, dataset: str):
     """This function takes a list of protein pairs, each pair being used to get their respective
     sequences from a dictionary of seqs. The first sequence is used as the 'database' and the second
     sequence is used as the query sequence in a ublast search.
 
     :param pairs: list of pairs
     :param seqs: dictionary where seq is ID and value is sequence
+    :param dataset: dataset name
     """
 
     direc = 'bm_data'
@@ -205,11 +204,11 @@ def ublast_search(pairs: list, seqs: dict):
 
     # Save for later parsing
     os.system(f'rm -rf {direc}')
-    with open('benchmarking/results/ublast_results.pkl', 'wb') as f:
+    with open(f'benchmarking/results/{dataset}/ublast_results.pkl', 'wb') as f:
         pickle.dump(results, f)
 
 
-def usearch_search(pairs: list, seqs: dict):
+def usearch_search(pairs: list, seqs: dict, dataset: str):
     """
     This function takes a list of protein pairs, each pair being used to get their respective
     sequences from a dictionary of seqs. The first sequence is used as the 'database' and the second
@@ -217,6 +216,7 @@ def usearch_search(pairs: list, seqs: dict):
 
     :param pairs: list of pairs
     :param seqs: dictionary where seq is ID and value is sequence
+    :param dataset: dataset name
     """
 
     direc = 'bm_data'
@@ -249,11 +249,11 @@ def usearch_search(pairs: list, seqs: dict):
 
     # Save for later parsing
     os.system(f'rm -rf {direc}')
-    with open('benchmarking/results/usearch_results.pkl', 'wb') as f:
+    with open(f'benchmarking/results/{dataset}/usearch_results.pkl', 'wb') as f:
         pickle.dump(results, f)
 
 
-def csblast_search(pairs: list, seqs: dict):
+def csblast_search(pairs: list, seqs: dict, dataset: str):
     """This function takes a list of protein pairs, each pair being used to get their respective
     sequences from a dictionary of seqs. The first sequence is used as the 'database' and the second
     sequence is used as the query sequence in a csblast search.
@@ -296,17 +296,18 @@ def csblast_search(pairs: list, seqs: dict):
 
     # Save for later parsing
     os.system(f'rm -rf {direc}')
-    with open('benchmarking/results/csblast_results.pkl', 'wb') as f:
+    with open(f'benchmarking/results/{dataset}/csblast_results.pkl', 'wb') as f:
         pickle.dump(results, f)
 
 
-def hhsearch_search(pairs: list, seqs: dict):
+def hhsearch_search(pairs: list, seqs: dict, dataset: str):
     """This function takes a list of protein pairs, each pair being used to get their respective
     sequences from a dictionary of seqs. The first sequence is used as the 'database' and the second
     sequence is used as the query sequence in a hhsearch search.
 
     :param pairs: list of pairs
     :param seqs: dictionary where seq is ID and value is sequence
+    :param dataset: dataset name
     """
 
     direc = 'hhs_data'
@@ -350,25 +351,26 @@ def hhsearch_search(pairs: list, seqs: dict):
 
     # Save for later parsing
     os.system(f'rm -rf {direc}')
-    with open('benchmarking/results/hhsearch_results.pkl', 'wb') as f:
+    with open(f'benchmarking/results/{dataset}/hhsearch_results.pkl', 'wb') as f:
         pickle.dump(results, f)
 
 
 def main():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-s', type=str,  default='usearch')
+    parser.add_argument('-d', type=str, default='pfam_nomax50')
+    parser.add_argument('-s', type=str,  default='blast')
     args = parser.parse_args()
 
     # Get all pairs and seqs from max50 files
-    max50_pairs = 'embedding/pfam_max50.pair'
-    max50_seqs = 'embedding/pfam_max50.fasta'
-    pairs = get_pairs(max50_pairs)
-    seqs = get_seqs(max50_seqs)
+    pairs = f'pfam_data/{args.d}.pair'
+    seqs = f'pfam_data/{args.d}.fasta'
+    pairs = get_pairs(pairs)
+    seqs = get_seqs(seqs)
 
     # Run search
     fxn = f'{args.s}_search'
-    globals()[fxn](pairs, seqs)
+    globals()[fxn](pairs, seqs, args.d)
 
 
 if __name__ == '__main__':
