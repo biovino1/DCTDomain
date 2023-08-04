@@ -14,6 +14,9 @@ sets up the conda environment with all of the necessary dependancies. The benchm
 to compare each protein pair in the dataset to each other to get a bit score and E-value. The results are
 then parsed and the AUROC is calculated.
 
+Instructions on how to use each tool for the purposes of this project can be found in guide.txt in the
+benchmarking directory.
+
 **************************************************************************************************************
 # Clustering
 **************************************************************************************************************
