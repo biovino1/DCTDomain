@@ -6,6 +6,7 @@ __author__ = 'Benjamin Iovino'
 __date__ = '07/27/23'
 """
 
+import argparse
 import os
 import pickle
 import subprocess
@@ -66,13 +67,18 @@ def phmmer_search(pairs: list, seqs: dict):
         # Get E-value and bit score from phmmer search
         # 14th line of stdout, will be blank if no hits detected
         result = subprocess.getoutput('phmmer bm_data/db_seq.fa bm_data/query_seq.fa')
-        result_line = result.split('\n')[14].split()
+        try:
+            result_line = result.split('\n')[14].split()
+        except IndexError:
+            print(result)
+            print(result_line)
+            break
 
         # If there is a hit, check if the hit is the same as the query sequence
         if result_line == [] or result_line[-1] != pair[1]:
             result_line = 0
         else:
-            result_line = [result_line[0], result_line[1], result_line[3], result_line[4]]
+            result_line = [result_line[0], result_line[1]]
         results[(pair[0], pair[1])] = result_line
 
     # Save so we can load for later parsing, much faster than running search each time
@@ -91,10 +97,12 @@ def blast_search(pairs: list, seqs: dict):
 
     results, db_seq = {}, ''
     for i, pair in enumerate(pairs):
-
+        print(i)
         # If first seq is different, make new blast database
         if db_seq != seqs[pair[0]]:
             db_seq = seqs[pair[0]]
+            os.system('rm -rf bm_data/')
+            os.system('mkdir bm_data')
             with open('bm_data/db_seq.fa', 'w', encoding='utf8') as db:
                 db.write(f'>{pair[0]}\n{db_seq}')
             os.system('makeblastdb -in bm_data/db_seq.fa '
@@ -116,6 +124,7 @@ def blast_search(pairs: list, seqs: dict):
         results[(pair[0], pair[1])] = result_line
 
     # Save for later parsing
+    os.system('rm -rf bm_data/')
     with open('benchmarking/results/blast_results.pkl', 'wb') as f:
         pickle.dump(results, f)
 
@@ -142,7 +151,8 @@ def fasta_search(pairs: list, seqs: dict):
 
         # Get bit score, SW score, and E-value from fasta search
         result = subprocess.getoutput('fasta36 bm_data/query_seq.fa bm_data/db_seq.fa')
-        result_line = result.split('\n')[19].split()
+        result_line = result.split('\n')[22].split()
+        result_line = [result_line[9], result_line[11]]
         results[(pair[0], pair[1])] = result_line
 
     # Save for later parsing
@@ -236,7 +246,7 @@ def csblast_search(pairs: list, seqs: dict):
 
     results, db_seq = {}, ''
     for i, pair in enumerate(pairs):
-
+        print(i)
         # If first seq is different, make new blast database
         if db_seq != seqs[pair[0]]:
             db_seq = seqs[pair[0]]
@@ -261,12 +271,13 @@ def csblast_search(pairs: list, seqs: dict):
         for j, score in enumerate(score_line):
             if score not in (1, -1):
                 result_line = result_line[j+3].split()
+                result_line = [result_line[1], result_line[2]]
         if len(result_line) > 3:
             result_line = [0]
         results[(pair[0], pair[1])] = result_line
 
-        print(result_line, i)
     # Save for later parsing
+    os.system('rm -rf bm_data/')
     with open('benchmarking/results/csblast_results.pkl', 'wb') as f:
         pickle.dump(results, f)
 
@@ -282,41 +293,58 @@ def hhsearch_search(pairs: list, seqs: dict):
 
     results, db_seq = {}, ''
     for i, pair in enumerate(pairs):
-
+        if i != 1846:
+            continue
         # If first seq is different, make new hhsearch database
         if db_seq != seqs[pair[0]]:
             db_seq = seqs[pair[0]]
-            with open('bm_data/db.fas', 'w', encoding='utf8') as db:
+            os.system('rm -rf hhs_data/')
+            os.system('mkdir hhs_data/')
+            with open('hhs_data/db.fas', 'w', encoding='utf8') as db:
                 db.write(f'>{pair[0]}\n{db_seq}')
 
             # Lots of commands here to make a database
-            # <db> here is db.fas, using scop40 database because its small
-            os.system('ffindex_from_fasta -s bm_data/db_fas.ffdata '
-                      'bm_data/db_fas.ffindex bm_data/db.fas')
-            os.system('hhblits_omp -i bm_data/db_fas -d bm_data/scop40_01Mar17/scop40 '
-                      '-oa3m bm_data/db_a3m_wo_ss -n 2 -cpu 1 -v 0')
-            os.system('mv bm_data/db_a3m_wo_ss.ffindex bm_data/db_a3m.ffindex')
-            os.system('mv bm_data/db_a3m_wo_ss.ffdata bm_data/db_a3m.ffdata')
-            os.system('ffindex_apply bm_data/db_a3m.ffdata bm_data/db_a3m.ffindex '
-                      '-i bm_data/db_hmm.ffindex -d bm_data/db_hmm.ffdata '
+            os.system('ffindex_from_fasta -s hhs_data/db_fas.ffdata '
+                      'hhs_data/db_fas.ffindex hhs_data/db.fas')
+
+            # DATABASE GOES IN BENCHMARKING FOLDER
+            os.system('hhblits_omp -i hhs_data/db_fas -d benchmarking/scop40_01Mar17/scop40 '
+                      '-oa3m hhs_data/db_a3m_wo_ss -n 2 -cpu 1 -v 0')
+            os.system('mv hhs_data/db_a3m_wo_ss.ffindex hhs_data/db_a3m.ffindex')
+            os.system('mv hhs_data/db_a3m_wo_ss.ffdata hhs_data/db_a3m.ffdata')
+            os.system('ffindex_apply hhs_data/db_a3m.ffdata hhs_data/db_a3m.ffindex '
+                      '-i hhs_data/db_hmm.ffindex -d hhs_data/db_hmm.ffdata '
                       '-- hhmake -i stdin -o stdout -v 0')
             os.system('cstranslate -f -x 0.3 -c 4 -I a3m '
-                      '-i bm_data/db_a3m -o bm_data/db_cs219')
+                      '-i hhs_data/db_a3m -o hhs_data/db_cs219')
 
         # Query sequence is always different so write to file
         query_seq = seqs[pair[1]]
-        with open('bm_data/query_seq.fa', 'w', encoding='utf8') as query:
+        with open('hhs_data/query_seq.fa', 'w', encoding='utf8') as query:
             query.write(f'>{pair[1]}\n{query_seq}')
-        result = subprocess.getoutput('hhsearch -i bm_data/query_seq.fa -d bm_data/db')
+        result = subprocess.getoutput('hhsearch -i hhs_data/query_seq.fa -d hhs_data/db')
+        print(result)
         result_line = result.split('\n')
         score_line = [s.find('No Hit') for s in result_line]
         for j, score in enumerate(score_line):
             if score != -1:
                 result_line = result_line[j+1].split()
-        print(result_line)
+                if result_line != []:
+                    result_line = [result_line[5], result_line[3]]
+
+        results[(pair[0], pair[1])] = result_line
+
+    # Save for later parsing
+    os.system('rm -rf hhs_data/')
+    with open('benchmarking/results/hhsearch_results.pkl', 'wb') as f:
+        pickle.dump(results, f)
 
 
 def main():
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-s', type=str,  default='hhsearch')
+    args = parser.parse_args()
 
     # Get all pairs and seqs from max50 files
     max50_pairs = 'embedding/pfam_max50.pair'
@@ -324,14 +352,9 @@ def main():
     pairs = get_pairs(max50_pairs)
     seqs = get_seqs(max50_seqs)
 
-    # Perform phmmer search on each pair
-    #phmmer_search(pairs, seqs)
-    #blast_search(pairs, seqs)
-    #fasta_search(pairs, seqs)
-    #ublast_search(pairs, seqs)
-    #usearch_search(pairs, seqs)
-    #csblast_search(pairs, seqs)
-    hhsearch_search(pairs, seqs)
+    # Run search
+    fxn = f'{args.s}_search'
+    globals()[fxn](pairs, seqs)
 
 
 if __name__ == '__main__':
