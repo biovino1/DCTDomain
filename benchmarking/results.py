@@ -18,7 +18,7 @@ def main():
     dataset = 'pfam_max50'
     max50_pairs = f'pfam_data/{dataset}.pair'
     pairs = get_pairs(max50_pairs)
-    results = ['blast', 'csblast', 'fasta', 'phmmer', 'ublast', 'usearch']
+    results = ['blast', 'csblast', 'fasta', 'phmmer', 'ublast', 'hhsearch', 'usearch']
     for result in results:
         with open(f'benchmarking/results/{dataset}/{result}_results.pkl', 'rb') as f:
             result_dict = pickle.load(f)
@@ -30,7 +30,10 @@ def main():
                     label = 1
                 else:
                     label = 0
-                f.write(f'{label}, {result_dict[(pair[0], pair[1])][0]}\n')
+                try:
+                    f.write(f'{label}, {result_dict[(pair[0], pair[1])][0]}\n')
+                except IndexError:
+                    f.write(f'{label}, 0\n')
 
 
 if __name__ == '__main__':

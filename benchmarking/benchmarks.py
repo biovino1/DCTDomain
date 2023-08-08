@@ -70,8 +70,9 @@ def phmmer_search(pairs: list, seqs: dict, dataset: str):
 
         # Get E-value and bit score from phmmer search
         # 14th line of stdout, will be blank if no hits detected
-        result = subprocess.getoutput(f'phmmer {direc}/db_seq.fa bm_data/query_seq.fa')
-        result_line = result.split('\n')[14].split()
+        result = subprocess.getoutput(f'phmmer --max -E 1000000000 '
+                                      f'{direc}/db_seq.fa {direc}/query_seq.fa')
+        result_line = result.split('\n')[16].split()
 
         # If there is a hit, check if the hit is the same as the query sequence
         if result_line == [] or result_line[-1] != pair[1]:
@@ -97,6 +98,8 @@ def blast_search(pairs: list, seqs: dict, dataset: str):
     """
 
     direc = 'bm_data'
+    os.system(f'rm -rf {direc}')
+    os.system(f'mkdir {direc}')
     results, db_seq = {}, ''
     for pair in pairs:
         # If first seq is different, make new blast database
@@ -106,8 +109,8 @@ def blast_search(pairs: list, seqs: dict, dataset: str):
             os.system(f'mkdir {direc}')
             with open(f'{direc}/db_seq.fa', 'w', encoding='utf8') as db:
                 db.write(f'>{pair[0]}\n{db_seq}')
-            os.system('makeblastdb -in bm_data/db_seq.fa '
-                '-dbtype prot -parse_seqids -out bm_data/blastdb/db_seq')
+            os.system(f'makeblastdb -in {direc}/db_seq.fa '
+                f'-dbtype prot -parse_seqids -out {direc}/blastdb/db_seq')
 
         # Query sequence is always different so write to file
         query_seq = seqs[pair[1]]
@@ -115,8 +118,8 @@ def blast_search(pairs: list, seqs: dict, dataset: str):
             query.write(f'>{pair[1]}\n{query_seq}')
 
         # Get E-value and bit score from blastp search
-        result = subprocess.getoutput('blastp -query bm_data/query_seq.fa '
-                                      '-db bm_data/blastdb/db_seq')
+        result = subprocess.getoutput(f'blastp -query {direc}/query_seq.fa '
+                                      f'-db {direc}/blastdb/db_seq -evalue 1000000000')
 
         # 29th line of stdout, will be blank if no hits detected
         result_line = result.split('\n')[29].split()[-2:]
@@ -155,7 +158,8 @@ def fasta_search(pairs: list, seqs: dict, dataset: str):
             query.write(f'>{pair[1]}\n{query_seq}')
 
         # Get bit score, SW score, and E-value from fasta search
-        result = subprocess.getoutput(f'fasta36 {direc}/query_seq.fa {direc}/db_seq.fa')
+        result = subprocess.getoutput(f'fasta36 {direc}/query_seq.fa '
+                                      f'{direc}/db_seq.fa -b 1000000000')
         result_line = result.split('\n')[22].split()
         result_line = [result_line[9], result_line[11]]
         results[(pair[0], pair[1])] = result_line
@@ -235,7 +239,7 @@ def usearch_search(pairs: list, seqs: dict, dataset: str):
 
         # Get E-value and bit score from usearch, unfortunately have to save results to file
         os.system(f'usearch -usearch_local {direc}/query_seq.fa '
-                  f'-db {direc}/db_seq.fa id 0 -evalue 1 '
+                  f'-db {direc}/db_seq.fa -id 0 -evalue 1e9 '
                   f'-userout {direc}/hits.txt -userfields bits+evalue')
 
         # Get results from file
@@ -263,6 +267,8 @@ def csblast_search(pairs: list, seqs: dict, dataset: str):
     """
 
     direc = 'bm_data'
+    os.system(f'rm -rf {direc}')
+    os.system(f'mkdir {direc}')
     results, db_seq = {}, ''
     for pair in pairs:
         # If first seq is different, make new blast database
@@ -281,7 +287,8 @@ def csblast_search(pairs: list, seqs: dict, dataset: str):
         result = subprocess.getoutput(f'csblast -i {direc}/query_seq.fa '
                                        f'-d {direc}/db_seq.fa '
                                        '-D /home/ben/anaconda3/data/K4000.lib '
-                                       '--blast-path /home/ben/anaconda3/envs/benchmarking/bin')
+                                       '--blast-path /home/ben/anaconda3/envs/benchmarking/bin '
+                                       '-e 1000000000')
 
         result_line = result.split('\n')
         score_line = [s.find('Score') for s in result_line]
@@ -289,8 +296,11 @@ def csblast_search(pairs: list, seqs: dict, dataset: str):
         for j, score in enumerate(score_line):
             if score not in (1, -1):
                 result_line = result_line[j+3].split()
-                result_line = [result_line[1], result_line[2]]
-        if len(result_line) > 3:
+                try:
+                    result_line = [result_line[1], result_line[2]]
+                except IndexError:
+                    result_line = [0]
+        if len(result_line) > 3 or isinstance(result_line, str):
             result_line = [0]
         results[(pair[0], pair[1])] = result_line
 
@@ -338,7 +348,8 @@ def hhsearch_search(pairs: list, seqs: dict, dataset: str):
         query_seq = seqs[pair[1]]
         with open(f'{direc}/query_seq.fa', 'w', encoding='utf8') as query:
             query.write(f'>{pair[1]}\n{query_seq}')
-        result = subprocess.getoutput(f'hhsearch -i {direc}/query_seq.fa -d {direc}/db')
+        result = subprocess.getoutput(f'hhsearch -i {direc}/query_seq.fa '
+                                       f'-d {direc}/db -E 1000000000')
         result_line = result.split('\n')
         score_line = [s.find('No Hit') for s in result_line]
         for j, score in enumerate(score_line):
@@ -358,7 +369,7 @@ def hhsearch_search(pairs: list, seqs: dict, dataset: str):
 def main():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-d', type=str, default='pfam_nomax50')
+    parser.add_argument('-d', type=str, default='pfam_max50')
     parser.add_argument('-s', type=str,  default='blast')
     args = parser.parse_args()
 
