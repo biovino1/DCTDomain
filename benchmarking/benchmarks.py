@@ -2,7 +2,7 @@
 with the first sequence acting as the 'sequence database' and the second sequence acting as the
 query sequence. E-value and bit scores are saved to a file.
 
-__author__ = 'Benjamin Iovino'
+__author__ = 'Ben Iovino'
 __date__ = '07/27/23'
 """
 
@@ -54,9 +54,9 @@ def phmmer_search(pairs: list, seqs: dict, dataset: str):
     :param dataset: dataset name
     """
 
-    direc = 'bm_data'
+    direc = f'phm_data/{dataset}'
     os.system(f'rm -rf {direc}')
-    os.system(f'mkdir {direc}')
+    os.system(f'mkdir -p {direc}')
     results = {}
     for pair in pairs:
 
@@ -72,13 +72,17 @@ def phmmer_search(pairs: list, seqs: dict, dataset: str):
         # 14th line of stdout, will be blank if no hits detected
         result = subprocess.getoutput(f'phmmer --max -E 1000000000 '
                                       f'{direc}/db_seq.fa {direc}/query_seq.fa')
-        result_line = result.split('\n')[16].split()
 
-        # If there is a hit, check if the hit is the same as the query sequence
-        if result_line == [] or result_line[-1] != pair[1]:
+        result_line = result.split('\n')
+        score_line = [s.find(pair[1]) for s in result_line]
+        for j, score in enumerate(score_line):
+            if score > 10:  # db seq is last in line reporting bitscore/eval
+                result_line = result_line[j].split()
+                result_line = [result_line[1], result_line[0]]
+                break
+
+        if len(result_line) > 3:  # No hits detected
             result_line = [0]
-        else:
-            result_line = [result_line[1], result_line[0]]
         results[(pair[0], pair[1])] = result_line
 
     # Save so we can load for later parsing, much faster than running search each time
@@ -97,16 +101,16 @@ def blast_search(pairs: list, seqs: dict, dataset: str):
     :param dataset: dataset name
     """
 
-    direc = 'bm_data'
+    direc = f'bls_data/{dataset}'
     os.system(f'rm -rf {direc}')
-    os.system(f'mkdir {direc}')
+    os.system(f'mkdir -p {direc}')
     results, db_seq = {}, ''
     for pair in pairs:
         # If first seq is different, make new blast database
         if db_seq != seqs[pair[0]]:
             db_seq = seqs[pair[0]]
             os.system(f'rm -rf {direc}')
-            os.system(f'mkdir {direc}')
+            os.system(f'mkdir -p {direc}')
             with open(f'{direc}/db_seq.fa', 'w', encoding='utf8') as db:
                 db.write(f'>{pair[0]}\n{db_seq}')
             os.system(f'makeblastdb -in {direc}/db_seq.fa '
@@ -143,9 +147,9 @@ def fasta_search(pairs: list, seqs: dict, dataset: str):
     :param dataset: dataset name
     """
 
-    direc = 'bm_data'
+    direc = f'fas_data/{dataset}'
     os.system(f'rm -rf {direc}')
-    os.system(f'mkdir {direc}')
+    os.system(f'mkdir -p {direc}')
     results = {}
     for pair in pairs:
 
@@ -180,9 +184,9 @@ def ublast_search(pairs: list, seqs: dict, dataset: str):
     :param dataset: dataset name
     """
 
-    direc = 'bm_data'
+    direc = f'ubl_data/{dataset}'
     os.system(f'rm -rf {direc}')
-    os.system(f'mkdir {direc}')
+    os.system(f'mkdir -p {direc}')
     results = {}
     for pair in pairs:
 
@@ -223,9 +227,9 @@ def usearch_search(pairs: list, seqs: dict, dataset: str):
     :param dataset: dataset name
     """
 
-    direc = 'bm_data'
+    direc = f'use_data/{dataset}'
     os.system(f'rm -rf {direc}')
-    os.system(f'mkdir {direc}')
+    os.system(f'mkdir -p {direc}')
     results = {}
     for pair in pairs:
 
@@ -266,11 +270,12 @@ def csblast_search(pairs: list, seqs: dict, dataset: str):
     :param seqs: dictionary where seq is ID and value is sequence
     """
 
-    direc = 'bm_data'
+    direc = f'csb_data/{dataset}'
     os.system(f'rm -rf {direc}')
-    os.system(f'mkdir {direc}')
+    os.system(f'mkdir -p {direc}')
     results, db_seq = {}, ''
     for pair in pairs:
+
         # If first seq is different, make new blast database
         if db_seq != seqs[pair[0]]:
             db_seq = seqs[pair[0]]
@@ -287,20 +292,23 @@ def csblast_search(pairs: list, seqs: dict, dataset: str):
         result = subprocess.getoutput(f'csblast -i {direc}/query_seq.fa '
                                        f'-d {direc}/db_seq.fa '
                                        '-D /home/ben/anaconda3/data/K4000.lib '
-                                       '--blast-path /home/ben/anaconda3/envs/benchmarking/bin '
+                                       '--blast-path $CONDA_PREFIX/bin '
                                        '-e 1000000000')
 
+        # Find line with bit score and E-value
         result_line = result.split('\n')
-        score_line = [s.find('Score') for s in result_line]
-        # Look for non -1 value in score_line
-        for j, score in enumerate(score_line):
-            if score not in (1, -1):
-                result_line = result_line[j+3].split()
-                try:
+        try:  # No hits occured and result_line[j] is out of range
+            score_line = [s.find(pair[0]) for s in result_line]
+            for j, score in enumerate(score_line):
+                if score == 0:  # db seq is first index in line reporting bitscore/eval
+                    result_line = result_line[j].split()
                     result_line = [result_line[1], result_line[2]]
-                except IndexError:
-                    result_line = [0]
-        if len(result_line) > 3 or isinstance(result_line, str):
+        except IndexError:
+            result_line = [0]
+        try:  # No hits occured and wrong line was selected
+            if len(result_line) > 3 or 'e' in result_line[0] or result_line[0] == '[blastpgp]':
+                result_line = [0]
+        except TypeError:
             result_line = [0]
         results[(pair[0], pair[1])] = result_line
 
@@ -320,14 +328,16 @@ def hhsearch_search(pairs: list, seqs: dict, dataset: str):
     :param dataset: dataset name
     """
 
-    direc = 'hhs_data'
+    direc = f'hh_data/{dataset}'
+    os.system(f'rm -rf {direc}')
+    os.system(f'mkdir -p {direc}')
     results, db_seq = {}, ''
     for pair in pairs:
         # If first seq is different, make new hhsearch database
         if db_seq != seqs[pair[0]]:
             db_seq = seqs[pair[0]]
             os.system(f'rm -rf {direc}')
-            os.system(f'mkdir {direc}')
+            os.system(f'mkdir -p {direc}')
             with open(f'{direc}/db.fas', 'w', encoding='utf8') as db:
                 db.write(f'>{pair[0]}\n{db_seq}')
 
@@ -369,8 +379,8 @@ def hhsearch_search(pairs: list, seqs: dict, dataset: str):
 def main():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-d', type=str, default='pfam_max50')
-    parser.add_argument('-s', type=str,  default='blast')
+    parser.add_argument('-d', type=str, default='pfam_nomax50')
+    parser.add_argument('-s', type=str,  default='csblast')
     args = parser.parse_args()
 
     # Get all pairs and seqs from max50 files
