@@ -379,8 +379,8 @@ def hhsearch_search(pairs: list, seqs: dict, dataset: str):
 def main():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-d', type=str, default='pfam_nomax50')
-    parser.add_argument('-s', type=str,  default='csblast')
+    parser.add_argument('-d', type=str, default='pfam_localpfam_nomax50')
+    parser.add_argument('-s', type=str,  default='usearch')
     args = parser.parse_args()
 
     # Get all pairs and seqs from max50 files
