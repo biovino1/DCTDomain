@@ -9,18 +9,33 @@ __date__ = "8/15/2023"
 from Bio import SeqIO
 from Bio.SeqIO import FastaIO
 
+
 def main():
 
 
-    # Get all sequences from pfam_localpfam_nomax50.pair
-    seqs = []
-    with open('pfam_data/pfam_localpfam_nomax50.pair', 'r', encoding='utf8') as pfile:
+    # Get all sequences from pfam_localpfam_nomax50.info
+    seqs, pairs = [], []
+    with open('pfam_data/pfam_localpfam_nomax50.info', 'r', encoding='utf8') as pfile:
         for line in pfile:
             line = line.split()
             if line[0] not in seqs:
                 seqs.append(line[0])
             if line[1] not in seqs:
                 seqs.append(line[1])
+            pairs.append(f'{line[0]} {line[1]} hom')
+
+    # Get pairs from pfam_localpfam_nomax50-dctsim.txt
+    sim_pairs = []
+    with open('pfam_data/pfam_localpfam_nomax50-dctsim.txt', 'r', encoding='utf8') as pfile:
+        for line in pfile:
+            sim_pairs.append((line.split()[0], line.split()[1]))
+
+    # Write pairs to file
+    with open('pfam_data/pfam_localpfam_nomax50.pair', 'w', encoding='utf8') as pfile:
+        pfile.write('#prot1 prot2 label\n')
+        for pair in pairs:
+            if (pair.split()[0], pair.split()[1]) in sim_pairs:
+                pfile.write(f'{pair}\n')
 
     # Get their fasta seqs from pfam_nomax50.fasta
     with open('pfam_data/pfam_nomax50.fasta', 'r', encoding='utf8') as ffile:

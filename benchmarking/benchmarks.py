@@ -380,7 +380,7 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', type=str, default='pfam_localpfam_nomax50')
-    parser.add_argument('-s', type=str,  default='usearch')
+    parser.add_argument('-s', type=str,  default='csblast')
     args = parser.parse_args()
 
     # Get all pairs and seqs from max50 files
