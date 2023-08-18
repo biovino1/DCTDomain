@@ -187,20 +187,26 @@ def ublast_search(pairs: list, seqs: dict, dataset: str):
     direc = f'ubl_data/{dataset}'
     os.system(f'rm -rf {direc}')
     os.system(f'mkdir -p {direc}')
-    results = {}
+    results, db_seq = {}, ''
     for pair in pairs:
 
-        # Get sequences and write each to file
-        db_seq = seqs[pair[0]]
+        # If first seq is different, make new ublast database
+        if db_seq != seqs[pair[0]]:
+            db_seq = seqs[pair[0]]
+            os.system(f'rm -rf {direc}')
+            os.system(f'mkdir -p {direc}')
+            with open(f'{direc}/db_seq.fa', 'w', encoding='utf8') as db:
+                db.write(f'>{pair[0]}\n{db_seq}')
+            os.system(f'usearch -makeudb_ublast {direc}/db_seq.fa -output {direc}/db.udb')
+
+        # Query sequence is always different
         query_seq = seqs[pair[1]]
-        with open(f'{direc}/db_seq.fa', 'w', encoding='utf8') as db:
-            db.write(f'>{pair[0]}\n{db_seq}')
         with open(f'{direc}/query_seq.fa', 'w', encoding='utf8') as query:
             query.write(f'>{pair[1]}\n{query_seq}')
 
         # Get E-value and bit score from ublast, unfortunately have to save results to file
         os.system(f'usearch -ublast {direc}/query_seq.fa '
-                  f'-db {direc}/db_seq.fa -evalue 1e-9 '
+                  f'-db {direc}/db.udb -evalue 1000000000 '
                   f'-userout {direc}/hits.txt -userfields bits+evalue')
 
         # Get results from file
@@ -242,8 +248,8 @@ def usearch_search(pairs: list, seqs: dict, dataset: str):
             query.write(f'>{pair[1]}\n{query_seq}')
 
         # Get E-value and bit score from usearch, unfortunately have to save results to file
-        os.system(f'usearch -usearch_local {direc}/query_seq.fa '
-                  f'-db {direc}/db_seq.fa -id 0 -evalue 1e9 '
+        os.system(f'usearch -search_local {direc}/query_seq.fa '
+                  f'-db {direc}/db_seq.fa -evalue 1000000000 '
                   f'-userout {direc}/hits.txt -userfields bits+evalue')
 
         # Get results from file
@@ -379,12 +385,12 @@ def hhsearch_search(pairs: list, seqs: dict, dataset: str):
 def main():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-d', type=str, default='pfam_localpfam_nomax50')
-    parser.add_argument('-s', type=str,  default='csblast')
+    parser.add_argument('-d', type=str, default='pfam_max50')
+    parser.add_argument('-s', type=str,  default='ublast')
     args = parser.parse_args()
 
     # Get all pairs and seqs from max50 files
-    pairs = f'pfam_data/{args.d}.pair'
+    pairs = f'pfam_data/{args.d}.pair'  #add .found for nomax50 dataset
     seqs = f'pfam_data/{args.d}.fasta'
     pairs = get_pairs(pairs)
     seqs = get_seqs(seqs)
