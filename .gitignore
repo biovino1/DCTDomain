@@ -1,6 +1,3 @@
-clustering/test.ipynb
-clustering/searchemb_dctdf.py
-clustering/compare.py
-clustering/clusters.ipynb
-clustering/cluster.py
 parsing/seed_fams.py
+clustering/searchemb_dctdf.py
+clustering/test.ipynb
