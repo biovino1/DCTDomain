@@ -104,8 +104,8 @@ def main():
     ============================================================================================="""
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-d', type=str, help='data used', default='scop_data')
-    parser.add_argument('-c', type=str, help='comparison data', default='fams_df.pkl')
+    parser.add_argument('-d', type=str, help='data used', default='pfam_data')
+    parser.add_argument('-c', type=str, help='comparison data', default='clans_df.pkl')
     args = parser.parse_args()
 
     # Comparison df is used for comparing to cluster assignments in cluster_df

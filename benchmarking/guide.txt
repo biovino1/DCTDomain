@@ -2,14 +2,14 @@ All of the following commands are to search a query protein against a database
 of proteins. In this project a database is simply one protein, but there can
 be more than one protein in the db.fasta file that is referenced below. All
 parameters are default from documentation which will be linked under each
-section.
+section. High evalues are used to ensure that all hits are returned.
 
 
 ### Using blast
 https://www.ncbi.nlm.nih.gov/books/NBK52636/
 
 makeblastdb -in <db.fasta> -dbtype <prot/nucl> -parse_seqids -out <db_name>
-blastp -query <query.fasta> -db <db_name>
+blastp -query <query.fasta> -db <db_name> -evalue 1000000000
 
 
 ### Using csblast (REQUIRES LEGACY BLAST)
@@ -24,13 +24,13 @@ the ~./anaconda3/data directory and blast-legacy executables will be in the
 ~./anaconda3/envs/benchmarking/bin directory.
 
 formatdb -t <db> -i <db.fasta> -p T -l formatdb.log
-csblast -i <query.fasta> -d <db.fasta> -D <K4000.lib/crf> --blast-path <blastpgp dir>
+csblast -i <query.fasta> -d <db.fasta> -D <K4000.lib/crf> --blast-path <blastpgp dir> -e 1000000000
 
 
 ### Using fasta
 https://fasta.bioch.virginia.edu/wrpearson/fasta/fasta_guide.pdf
 
-fasta36 <query.fasta> <db.fasta>
+fasta36 <query.fasta> <db.fasta> -b 1000000000'
 
 
 ### Using hhsearch
@@ -50,13 +50,13 @@ ffindex_from_fasta -s <db>_fas.ffdata <db>_fas.ffindex <db>.fas
 hhblits_omp -i <db>_fas -d <scop40/bfd/uniclust30> -oa3m <db>_a3m -n 2 -cpu 1 -v 0
 ffindex_apply <db>_a3m.ffdata <db>_a3m.ffindex -i <db>_hmm.ffindex -d <db>_hmm.ffdata -- hhmake -i stdin -o stdout -v 0
 cstranslate -f -x 0.3 -c 4 -I a3m -i <db>_a3m -o <db>_cs219
-hhsearch -i <query.fasta> -d <db>
+hhsearch -i <query.fasta> -d <db> -E 1000000000'
 
 
 ### Using phmmer
 http://eddylab.org/software/hmmer/Userguide.pdf (phmmer instructions on p 41/227)
 
-phmmer <db.fasta> <query.fasta>
+phmmer --max -E 1000000000 <db.fasta> <query.fasta>
 
 
 ### Using ublast
@@ -66,10 +66,11 @@ https://drive5.com/usearch/manual/output_files.html
 Both ublast and usearch can have different output formats, but all we used in this project was the
 bitscore and evalues. More options can be found in the second link above.
 
+usearch -makeudb_ublast <db.fasta> -output <db.udb>
 usearch -ublast <query.fasta> -db <db.fasta> -evalue 1e-9 -userout hits.txt -userfields bits+evalue
 
 
 ### Using usearch
 https://drive5.com/usearch/manual/cmd_usearch_local.html
 
-usearch -usearch_local <query.fasta> -db <db.fasta> -id 0 -evalue 1 -userout hits.txt -userfields bits+evalue
+usearch -search_local <query.fasta> -db <db.fasta> -evalue 1e-9 -userout hits.txt -userfields bits+evalue

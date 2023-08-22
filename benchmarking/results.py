@@ -15,10 +15,10 @@ def main():
     """
 
     # Read each dict from results file and create csv file
-    dataset = 'pfam_max50'
+    dataset = 'pfam_localpfam_nomax50'
     max50_pairs = f'pfam_data/{dataset}.pair'
     pairs = get_pairs(max50_pairs)
-    results = ['blast', 'csblast', 'hhsearch', 'fasta', 'phmmer', 'ublast', 'usearch']
+    results = ['blast', 'csblast', 'fasta', 'phmmer', 'ublast', 'usearch', 'hhsearch']
     for result in results:
         with open(f'benchmarking/results/{dataset}/{result}_results.pkl', 'rb') as f:
             result_dict = pickle.load(f)

@@ -107,19 +107,19 @@ def main():
     ============================================================================================="""
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-q', type=str, help='clustering method', default='kmeans')
-    parser.add_argument('-d', type=str, help='data used', default='scop_data')
-    parser.add_argument('-m', type=str, help='linkage method', default='ward')
-    parser.add_argument('-p', type=str, help='linkage metric', default='euclidean')
+    parser.add_argument('-q', type=str, help='clustering method', default='hierarchical')
+    parser.add_argument('-d', type=str, help='data used', default='pfam_data')
+    parser.add_argument('-m', type=str, help='linkage method', default='average')
+    parser.add_argument('-p', type=str, help='linkage metric', default='cityblock')
     parser.add_argument('-l', type=str, help='linkage data file', default='None')
-    parser.add_argument('-t', type=float, help='fcluster threshold', default=500)
+    parser.add_argument('-t', type=float, help='fcluster threshold', default=14420)
     parser.add_argument('-c', type=str, help='fcluster criterion', default='distance')
     parser.add_argument('-k', type=int, help='number of kmeans clusters', default=1562)
     args = parser.parse_args()
     logging.info(args)
 
     # Open dct_df.pkl and get linkage_data/clusters
-    with open(f'{args.d}/dct_df.pkl', 'rb') as file:
+    with open(f'{args.d}/searchemb_df.pkl', 'rb') as file:
         dct_df = pickle.load(file)
 
     if args.q == 'hierarchical':
