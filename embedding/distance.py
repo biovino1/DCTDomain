@@ -28,7 +28,7 @@ def comp_dist(transforms: np.ndarray) -> tuple:
 
     # Load pfam_max50 pairs
     pairs = []
-    with open('embedding/pfam_max50.pair', 'r', encoding='utf8') as file:
+    with open('pfam_data/pfam_max50.pair', 'r', encoding='utf8') as file:
         for line in file:
             if line.startswith('#'):  # Skip first line
                 continue

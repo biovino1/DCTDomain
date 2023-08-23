@@ -22,7 +22,7 @@ def main():
     # Embed, transform, and compute distances
     for i in range(1, 36):
         logging.info('Embedding sequences (layer %s)...', i)
-        os.system(f'python embedding/embed.py -f embedding/pfam_max50.fasta -l {i}')
+        os.system(f'python embedding/embed.py -f pfam_data/pfam_max50.fasta -l {i}')
         logging.info('Transforming embeddings (layer %s)...', i)
         os.system(f'python embedding/transform.py -l {i}')
         logging.info('Computing distances (layer %s)...\n', i)

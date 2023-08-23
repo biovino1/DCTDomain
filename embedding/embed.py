@@ -61,7 +61,7 @@ def main():
     ============================================================================================="""
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-f', type=str, default='embedding/pfam_max50.fasta')
+    parser.add_argument('-f', type=str, default='pfam_data/pfam_max50.fasta')
     parser.add_argument('-l', type=int, default=23)
     args = parser.parse_args()
 
