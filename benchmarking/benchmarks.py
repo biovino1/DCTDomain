@@ -7,10 +7,17 @@ __date__ = '07/27/23'
 """
 
 import argparse
+import datetime
 import os
+import logging
 import pickle
 import subprocess
 from Bio import SeqIO
+
+log_filename = 'logs/benchmarks.log'  #pylint: disable=C0103
+os.makedirs(os.path.dirname(log_filename), exist_ok=True)
+logging.basicConfig(filename=log_filename, filemode='w',
+                     level=logging.INFO, format='%(message)s')
 
 
 def get_pairs(file: str) -> list:
@@ -58,6 +65,7 @@ def phmmer_search(pairs: list, seqs: dict, dataset: str):
     os.system(f'rm -rf {direc}')
     os.system(f'mkdir -p {direc}')
     results = {}
+    total_time = 0
     for pair in pairs:
 
         # Get sequences and write each to file
@@ -70,8 +78,12 @@ def phmmer_search(pairs: list, seqs: dict, dataset: str):
 
         # Get E-value and bit score from phmmer search
         # 14th line of stdout, will be blank if no hits detected
+        start = datetime.datetime.now()
         result = subprocess.getoutput(f'phmmer --max -E 1000000000 '
                                       f'{direc}/db_seq.fa {direc}/query_seq.fa')
+        end = datetime.datetime.now()
+        total_time += (end-start).total_seconds()
+        logging.info('%s %s %s', pair[0], pair[1], end-start)
 
         result_line = result.split('\n')
         score_line = [s.find(pair[1]) for s in result_line]
@@ -85,6 +97,7 @@ def phmmer_search(pairs: list, seqs: dict, dataset: str):
             result_line = [0]
         results[(pair[0], pair[1])] = result_line
 
+    logging.info('Total time: %s', total_time)
     # Save so we can load for later parsing, much faster than running search each time
     os.system(f'rm -rf {direc}')
     with open(f'benchmarking/results/{dataset}/phmmer_results.pkl', 'wb') as f:
@@ -105,6 +118,7 @@ def blast_search(pairs: list, seqs: dict, dataset: str):
     os.system(f'rm -rf {direc}')
     os.system(f'mkdir -p {direc}')
     results, db_seq = {}, ''
+    total_time = 0
     for pair in pairs:
         # If first seq is different, make new blast database
         if db_seq != seqs[pair[0]]:
@@ -122,8 +136,12 @@ def blast_search(pairs: list, seqs: dict, dataset: str):
             query.write(f'>{pair[1]}\n{query_seq}')
 
         # Get E-value and bit score from blastp search
+        start = datetime.datetime.now()
         result = subprocess.getoutput(f'blastp -query {direc}/query_seq.fa '
                                       f'-db {direc}/blastdb/db_seq -evalue 1000000000')
+        end = datetime.datetime.now()
+        total_time += (end-start).total_seconds()
+        logging.info('%s %s %s', pair[0], pair[1], end-start)
 
         # 29th line of stdout, will be blank if no hits detected
         result_line = result.split('\n')[29].split()[-2:]
@@ -131,6 +149,7 @@ def blast_search(pairs: list, seqs: dict, dataset: str):
             result_line = [0]
         results[(pair[0], pair[1])] = result_line
 
+    logging.info('Total time: %s', total_time)
     # Save for later parsing
     os.system(f'rm -rf {direc}')
     with open(f'benchmarking/results/{dataset}/blast_results.pkl', 'wb') as f:
@@ -151,6 +170,7 @@ def fasta_search(pairs: list, seqs: dict, dataset: str):
     os.system(f'rm -rf {direc}')
     os.system(f'mkdir -p {direc}')
     results = {}
+    total_time = 0
     for pair in pairs:
 
         # Get sequences and write each to file
@@ -162,12 +182,17 @@ def fasta_search(pairs: list, seqs: dict, dataset: str):
             query.write(f'>{pair[1]}\n{query_seq}')
 
         # Get bit score, SW score, and E-value from fasta search
+        start = datetime.datetime.now()
         result = subprocess.getoutput(f'fasta36 {direc}/query_seq.fa '
                                       f'{direc}/db_seq.fa -b 1000000000')
+        end = datetime.datetime.now()
+        total_time += (end-start).total_seconds()
+        logging.info('%s %s %s', pair[0], pair[1], end-start)
         result_line = result.split('\n')[22].split()
         result_line = [result_line[9], result_line[11]]
         results[(pair[0], pair[1])] = result_line
 
+    logging.info('Total time: %s', total_time)
     # Save for later parsing
     os.system(f'rm -rf {direc}')
     with open(f'benchmarking/results/{dataset}/fasta_results.pkl', 'wb') as f:
@@ -188,6 +213,7 @@ def ublast_search(pairs: list, seqs: dict, dataset: str):
     os.system(f'rm -rf {direc}')
     os.system(f'mkdir -p {direc}')
     results, db_seq = {}, ''
+    total_time = 0
     for pair in pairs:
 
         # If first seq is different, make new ublast database
@@ -205,9 +231,13 @@ def ublast_search(pairs: list, seqs: dict, dataset: str):
             query.write(f'>{pair[1]}\n{query_seq}')
 
         # Get E-value and bit score from ublast, unfortunately have to save results to file
+        start = datetime.datetime.now()
         os.system(f'usearch -ublast {direc}/query_seq.fa '
                   f'-db {direc}/db.udb -evalue 1000000000 '
                   f'-userout {direc}/hits.txt -userfields bits+evalue')
+        end = datetime.datetime.now()
+        total_time += (end-start).total_seconds()
+        logging.info('%s %s %s', pair[0], pair[1], end-start)
 
         # Get results from file
         with open(f'{direc}/hits.txt', 'r', encoding='utf8') as f:
@@ -216,6 +246,7 @@ def ublast_search(pairs: list, seqs: dict, dataset: str):
             result_line = [0]
         results[(pair[0], pair[1])] = result_line
 
+    logging.info('Total time: %s', total_time)
     # Save for later parsing
     os.system(f'rm -rf {direc}')
     with open(f'benchmarking/results/{dataset}/ublast_results.pkl', 'wb') as f:
@@ -237,6 +268,7 @@ def usearch_search(pairs: list, seqs: dict, dataset: str):
     os.system(f'rm -rf {direc}')
     os.system(f'mkdir -p {direc}')
     results = {}
+    total_time = 0
     for pair in pairs:
 
         # Get sequences and write each to file
@@ -248,9 +280,13 @@ def usearch_search(pairs: list, seqs: dict, dataset: str):
             query.write(f'>{pair[1]}\n{query_seq}')
 
         # Get E-value and bit score from usearch, unfortunately have to save results to file
+        start = datetime.datetime.now()
         os.system(f'usearch -search_local {direc}/query_seq.fa '
                   f'-db {direc}/db_seq.fa -evalue 1000000000 '
                   f'-userout {direc}/hits.txt -userfields bits+evalue')
+        end = datetime.datetime.now()
+        total_time += (end-start).total_seconds()
+        logging.info('%s %s %s', pair[0], pair[1], end-start)
 
         # Get results from file
         with open(f'{direc}/hits.txt', 'r', encoding='utf8') as f:
@@ -261,6 +297,7 @@ def usearch_search(pairs: list, seqs: dict, dataset: str):
             result_line = [result_line[0], result_line[1]]
         results[(pair[0], pair[1])] = result_line
 
+    logging.info('Total time: %s', total_time)
     # Save for later parsing
     os.system(f'rm -rf {direc}')
     with open(f'benchmarking/results/{dataset}/usearch_results.pkl', 'wb') as f:
@@ -280,6 +317,7 @@ def csblast_search(pairs: list, seqs: dict, dataset: str):
     os.system(f'rm -rf {direc}')
     os.system(f'mkdir -p {direc}')
     results, db_seq = {}, ''
+    total_time = 0
     for pair in pairs:
 
         # If first seq is different, make new blast database
@@ -295,11 +333,15 @@ def csblast_search(pairs: list, seqs: dict, dataset: str):
             query.write(f'>{pair[1]}\n{query_seq}')
 
         # Get E-value and bit score from blastp search
+        start = datetime.datetime.now()
         result = subprocess.getoutput(f'csblast -i {direc}/query_seq.fa '
                                        f'-d {direc}/db_seq.fa '
                                        '-D /home/ben/anaconda3/data/K4000.lib '
                                        '--blast-path $CONDA_PREFIX/bin '
                                        '-e 1000000000')
+        end = datetime.datetime.now()
+        total_time += (end-start).total_seconds()
+        logging.info('%s %s %s', pair[0], pair[1], end-start)
 
         # Find line with bit score and E-value
         result_line = result.split('\n')
@@ -318,6 +360,7 @@ def csblast_search(pairs: list, seqs: dict, dataset: str):
             result_line = [0]
         results[(pair[0], pair[1])] = result_line
 
+    logging.info('Total time: %s', total_time)
     # Save for later parsing
     os.system(f'rm -rf {direc}')
     with open(f'benchmarking/results/{dataset}/csblast_results.pkl', 'wb') as f:
@@ -338,6 +381,7 @@ def hhsearch_search(pairs: list, seqs: dict, dataset: str):
     os.system(f'rm -rf {direc}')
     os.system(f'mkdir -p {direc}')
     results, db_seq = {}, ''
+    total_time = 0
     for pair in pairs:
         # If first seq is different, make new hhsearch database
         if db_seq != seqs[pair[0]]:
@@ -364,8 +408,15 @@ def hhsearch_search(pairs: list, seqs: dict, dataset: str):
         query_seq = seqs[pair[1]]
         with open(f'{direc}/query_seq.fa', 'w', encoding='utf8') as query:
             query.write(f'>{pair[1]}\n{query_seq}')
+
+        # Record total time to run search
+        start = datetime.datetime.now()
         result = subprocess.getoutput(f'hhsearch -i {direc}/query_seq.fa '
                                        f'-d {direc}/db -E 1000000000')
+        end = datetime.datetime.now()
+        total_time += (end-start).total_seconds()
+        logging.info('%s %s %s', pair[0], pair[1], end-start)
+
         result_line = result.split('\n')
         score_line = [s.find('No Hit') for s in result_line]
         for j, score in enumerate(score_line):
@@ -376,6 +427,7 @@ def hhsearch_search(pairs: list, seqs: dict, dataset: str):
 
         results[(pair[0], pair[1])] = result_line
 
+    logging.info('Total time: %s', total_time)
     # Save for later parsing
     os.system(f'rm -rf {direc}')
     with open(f'benchmarking/results/{dataset}/hhsearch_results.pkl', 'wb') as f:
@@ -385,8 +437,8 @@ def hhsearch_search(pairs: list, seqs: dict, dataset: str):
 def main():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-d', type=str, default='pfam_max50')
-    parser.add_argument('-s', type=str,  default='ublast')
+    parser.add_argument('-d', type=str, default='pfam_localpfam_nomax50')
+    parser.add_argument('-s', type=str,  default='hhsearch')
     args = parser.parse_args()
 
     # Get all pairs and seqs from max50 files
