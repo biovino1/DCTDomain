@@ -33,15 +33,15 @@ def graph_auroc(auroc: list):
     ============================================================================================="""
 
     aurange = range(len(auroc))
-    plt.figure(figsize=(12, 5))
+    plt.figure(figsize=(9, 4))
     plt.plot(list(aurange), [auroc[i][1] for i in aurange], 'o-')
-    plt.xlabel('Layer')
-    plt.ylabel('AUROC')
-    plt.title('AUROC vs. Layer')
+    plt.xlabel('Layer', size=12)
+    plt.ylabel('AUC', size=15)
+    plt.title('AUC vs. Layer', size=15)
     plt.xticks(list(aurange), [auroc[i][0] for i in aurange])
     plt.grid(axis='y', linestyle='--')
     plt.grid(axis='x', linestyle='--')
-    plt.savefig('embedding/graphs/auroc.png')
+    plt.savefig('embedding/graphs/auroc.pdf')
 
 
 def heat_map(auroc: list):

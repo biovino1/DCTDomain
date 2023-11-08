@@ -97,7 +97,7 @@ def phmmer_search(pairs: list, seqs: dict, dataset: str):
             result_line = [0]
         results[(pair[0], pair[1])] = result_line
 
-    logging.info('Total time: %s', total_time)
+    logging.info('Total time: %s', total_time)  #NOSONAR
     # Save so we can load for later parsing, much faster than running search each time
     os.system(f'rm -rf {direc}')
     with open(f'benchmarking/results/{dataset}/phmmer_results.pkl', 'wb') as f:
@@ -438,7 +438,7 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', type=str, default='pfam_localpfam_nomax50')
-    parser.add_argument('-s', type=str,  default='hhsearch')
+    parser.add_argument('-s', type=str,  default='phmmer')
     args = parser.parse_args()
 
     # Get all pairs and seqs from max50 files

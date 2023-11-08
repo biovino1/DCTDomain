@@ -26,7 +26,7 @@ def main():
                    'w', encoding='utf8') as f:
             f.write('Homolog, Bit Score\n')
             for pair in pairs:
-                if pair[2].startswith('hom'):
+                if pair[2].startswith('localhom') or pair[2].startswith('hom'):
                     label = 1
                 else:
                     label = 0
