@@ -3,6 +3,8 @@
 **************************************************************************************************************
 
 Miscellaneous scripts for benchmarking, clustering, embedding, and parsing different DCT transformed datasets.
+Benchmarking results were published in https://www.biorxiv.org/node/3511025.full and corresponding github repo
+can be found at https://github.com/mgtools/DCTdomain.
 
 **************************************************************************************************************
 # Benchmarking
@@ -19,7 +21,7 @@ benchmarking directory.
 
 Results:
 
-ROC.png shows the ROC curves and corresponding AUC for each tool on each dataset. AUC values were nearly
+benchmarking/ROC.png shows the ROC curves and corresponding AUC for each tool on each dataset. AUC values were nearly
 identical to the article mentioned earlier. Discrepencies are likely due to do miscaptured outputs or
 rounding differences.
 
