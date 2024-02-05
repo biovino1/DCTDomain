@@ -11,6 +11,7 @@ import datetime
 import os
 import logging
 import pickle
+import pyprost
 import subprocess
 from Bio import SeqIO
 
@@ -49,6 +50,41 @@ def get_seqs(file: str) -> dict:
             seqs[seq.id] = str(seq.seq)
 
     return seqs
+
+
+def prost_search(pairs: list, seqs: dict, dataset: str):
+    """This function takes a list of protein pairs, each pair being used to get their respective
+    sequences from a dictionary of seqs. The first sequence is used as the 'sequence database' and 
+    the second sequence is used as the query sequence in a prost search.
+
+    :param pairs: list of pairs
+    :param seqs: dictionary where seq is ID and value is sequence
+    :param dataset: dataset name
+    """
+
+    results, db_seq = {}, ''
+    total_time = 0
+    for pair in pairs:
+
+        # Get sequences and write each to file
+        if db_seq != seqs[pair[0]]:
+            db_seq = seqs[pair[0]]
+            db_emb = pyprost.quantSeq(db_seq)
+        query_seq = seqs[pair[1]]
+        query_emb = pyprost.quantSeq(query_seq)
+
+        # Get E-value and bit score from prost search
+        start = datetime.datetime.now()
+        dist = pyprost.prostDistance(db_emb, query_emb)
+        end = datetime.datetime.now()
+        total_time += (end-start).total_seconds()
+        logging.info('%s %s %s', pair[0], pair[1], end-start)
+        results[(pair[0], pair[1])] = dist
+
+    logging.info('Total time: %s', total_time)
+    # Save for later parsing
+    with open(f'benchmarking/results/{dataset}/prost_results.pkl', 'wb') as f:
+        pickle.dump(results, f)
 
 
 def phmmer_search(pairs: list, seqs: dict, dataset: str):
@@ -437,12 +473,12 @@ def hhsearch_search(pairs: list, seqs: dict, dataset: str):
 def main():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-d', type=str, default='pfam_localpfam_nomax50')
-    parser.add_argument('-s', type=str,  default='phmmer')
+    parser.add_argument('-d', type=str, default='pfam_max50')
+    parser.add_argument('-s', type=str,  default='prost')
     args = parser.parse_args()
 
     # Get all pairs and seqs from max50 files
-    pairs = f'pfam_data/{args.d}.pair'  #add .found for nomax50 dataset
+    pairs = f'pfam_data/{args.d}.pair'
     seqs = f'pfam_data/{args.d}.fasta'
     pairs = get_pairs(pairs)
     seqs = get_seqs(seqs)
